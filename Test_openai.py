@@ -5,7 +5,7 @@ api_key = "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"
 
 # 输入代码示例
 code_input = "explain the code:\n"
-with open("./Main_algorithm_GCN/CR_MGC.py", 'r') as f:
+with open("./Draw.py", 'r') as f:
     code = f.read()
 
 code_input += code
