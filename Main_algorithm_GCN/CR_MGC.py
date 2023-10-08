@@ -231,6 +231,8 @@ class CR_MGC:
             if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                 temp_max = torch.norm(final_positions[j] - remain_positions[j])
                 max_index = j
+        # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
+        # my loss function
         loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
         # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
