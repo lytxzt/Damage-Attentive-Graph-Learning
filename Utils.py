@@ -84,18 +84,18 @@ def calculate_norm(speeds):
     return deepcopy(normalized_speed)
 
 
-def random_sampling():
-    """
-    :return: list with form [ , , , , ,]
-    """
-    list_ = []
-    count = 0
-    while count < config_sample_number:
-        random_number = np.random.randint(0, config_buffer_capacity, 1).tolist()[0]
-        if random_number not in list_:
-            list_.append(random_number)
-            count += 1
-    return list_
+# def random_sampling():
+#     """
+#     :return: list with form [ , , , , ,]
+#     """
+#     list_ = []
+#     count = 0
+#     while count < config_sample_number:
+#         random_number = np.random.randint(0, config_buffer_capacity, 1).tolist()[0]
+#         if random_number not in list_:
+#             list_.append(random_number)
+#             count += 1
+#     return list_
 
 
 def soft_update(target, source, t):
@@ -259,3 +259,12 @@ def union_set(listA, listB):
         if i not in listA:
             union_set.append(deepcopy(i))
     return deepcopy(union_set)
+
+
+# my function start here
+def calculate_eigen_central(A, num_of_agents):
+    e_vals, e_vecs = np.linalg.eig(A)
+    
+
+def calculate_degree_central(A, num_of_agents):
+    return deepcopy(np.sum(A, axis=0))
