@@ -81,7 +81,7 @@ storage_remain_connectivity_matrix.append(
 break_CCN_flag = True
 # num of connected steps
 num_connected_steps = 0
-for step in range(400):
+for step in range(200):
     # destroy at time step 0
     if step == 0:
         print("=======================================")

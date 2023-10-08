@@ -1,6 +1,1004 @@
-[88. 99. 92. 99. 99. 98. 93. 97. 99. 97. 99. 99. 99. 81. 99. 99. 99. 98.
- 99. 92. 99. 98. 99. 99. 95. 99. 94. 92. 99. 99. 99. 95. 85. 99. 99. 99.
- 99. 99. 99. 99. 93. 93. 99. 98. 97. 97. 92. 99. 97. 99. 99. 94. 99. 97.
- 99. 99. 92. 87. 97. 92. 92. 93. 93. 99. 97. 90. 98. 99. 95. 97. 82. 99.
- 99. 97. 84. 89. 83. 84. 99. 98. 94. 95. 94. 95. 99. 79. 99. 90. 92. 99.
- 97. 99. 90. 90. 98. 95. 91. 99. 98. 91.] 22.56
+SCC problem Starts...
+------------------------------
+Algorithm: CR-MGC (proposed algorithm)
+=======================================
+destroy 0 -- mode 2 num 100 
+destroy 100 nodes 
+destroy index list :
+[46, 31, 169, 114, 85, 61, 50, 125, 160, 126, 199, 122, 75, 117, 67, 193, 64, 177, 30, 83, 133, 172, 44, 60, 43, 176, 51, 93, 147, 129, 173, 190, 55, 76, 185, 1, 87, 103, 56, 162, 137, 88, 151, 146, 134, 69, 154, 77, 141, 29, 72, 188, 145, 128, 37, 168, 41, 48, 52, 111, 33, 104, 131, 148, 25, 197, 66, 86, 120, 22, 192, 171, 136, 19, 62, 10, 198, 82, 11, 153, 45, 26, 116, 100, 80, 184, 101, 74, 138, 68, 163, 97, 165, 0, 17, 98, 158, 121, 194, 155]
+=======================================
+Applying graph convolutional operations...
+loading meta param meta_100
+---------------------------------------
+start training GCN ... 
+=======================================
+    episode 0, loss 561.680542
+---------------------------------------
+    episode 1, loss 573.136108
+---------------------------------------
+    episode 2, loss 567.171448
+---------------------------------------
+    episode 3, loss 555.990967
+---------------------------------------
+    episode 4, loss 557.319580
+---------------------------------------
+    episode 5, loss 559.535095
+---------------------------------------
+    episode 6, loss 559.589172
+---------------------------------------
+    episode 7, loss 553.790344
+---------------------------------------
+    episode 8, loss 548.798889
+---------------------------------------
+    episode 9, loss 548.834717
+---------------------------------------
+    episode 10, loss 548.670471
+---------------------------------------
+    episode 11, loss 545.976013
+---------------------------------------
+    episode 12, loss 545.440002
+---------------------------------------
+    episode 13, loss 543.690002
+---------------------------------------
+    episode 14, loss 539.820740
+---------------------------------------
+    episode 15, loss 537.770569
+---------------------------------------
+    episode 16, loss 538.531067
+---------------------------------------
+    episode 17, loss 537.636719
+---------------------------------------
+    episode 18, loss 535.279358
+---------------------------------------
+    episode 19, loss 535.354431
+---------------------------------------
+    episode 20, loss 533.551758
+---------------------------------------
+    episode 21, loss 532.541748
+---------------------------------------
+    episode 22, loss 530.163208
+---------------------------------------
+    episode 23, loss 528.868347
+---------------------------------------
+    episode 24, loss 526.346069
+---------------------------------------
+    episode 25, loss 524.642944
+---------------------------------------
+    episode 26, loss 521.530579
+---------------------------------------
+    episode 27, loss 520.939575
+---------------------------------------
+    episode 28, loss 518.120056
+---------------------------------------
+    episode 29, loss 519.088074
+---------------------------------------
+    episode 30, loss 517.502625
+---------------------------------------
+    episode 31, loss 513.145264
+---------------------------------------
+    episode 32, loss 511.934937
+---------------------------------------
+    episode 33, loss 509.122467
+---------------------------------------
+    episode 34, loss 506.180054
+---------------------------------------
+    episode 35, loss 503.917786
+---------------------------------------
+    episode 36, loss 504.350128
+---------------------------------------
+    episode 37, loss 505.141998
+---------------------------------------
+    episode 38, loss 500.654694
+---------------------------------------
+    episode 39, loss 495.409943
+---------------------------------------
+    episode 40, loss 494.657440
+---------------------------------------
+    episode 41, loss 492.404846
+---------------------------------------
+    episode 42, loss 489.832520
+---------------------------------------
+    episode 43, loss 483.738861
+---------------------------------------
+    episode 44, loss 481.338684
+---------------------------------------
+    episode 45, loss 477.535858
+---------------------------------------
+    episode 46, loss 475.920715
+---------------------------------------
+    episode 47, loss 473.496887
+---------------------------------------
+    episode 48, loss 468.451324
+---------------------------------------
+    episode 49, loss 464.677765
+---------------------------------------
+    episode 50, loss 460.363403
+---------------------------------------
+    episode 51, loss 459.196106
+---------------------------------------
+    episode 52, loss 452.165558
+---------------------------------------
+    episode 53, loss 455.174713
+---------------------------------------
+    episode 54, loss 450.589722
+---------------------------------------
+    episode 55, loss 444.214081
+---------------------------------------
+    episode 56, loss 437.023285
+---------------------------------------
+    episode 57, loss 441.876373
+---------------------------------------
+    episode 58, loss 434.469238
+---------------------------------------
+    episode 59, loss 428.140869
+---------------------------------------
+    episode 60, loss 427.022034
+---------------------------------------
+    episode 61, loss 424.406555
+---------------------------------------
+    episode 62, loss 415.932037
+---------------------------------------
+    episode 63, loss 404.193115
+---------------------------------------
+    episode 64, loss 398.167389
+---------------------------------------
+    episode 65, loss 389.440796
+---------------------------------------
+    episode 66, loss 387.228912
+---------------------------------------
+    episode 67, loss 381.968048
+---------------------------------------
+    episode 68, loss 379.388428
+---------------------------------------
+    episode 69, loss 384.377075
+---------------------------------------
+    episode 70, loss 379.048767
+---------------------------------------
+    episode 71, loss 362.747314
+---------------------------------------
+    episode 72, loss 357.925598
+---------------------------------------
+    episode 73, loss 346.157471
+---------------------------------------
+    episode 74, loss 344.446106
+---------------------------------------
+    episode 75, loss 334.823090
+---------------------------------------
+    episode 76, loss 331.491821
+---------------------------------------
+    episode 77, loss 322.855255
+---------------------------------------
+    episode 78, loss 320.783295
+---------------------------------------
+    episode 79, loss 317.538147
+---------------------------------------
+    episode 80, loss 305.603058
+---------------------------------------
+    episode 81, loss 299.530701
+---------------------------------------
+    episode 82, loss 282.208984
+---------------------------------------
+    episode 83, loss 305.065521
+---------------------------------------
+    episode 84, loss 294.678711
+---------------------------------------
+    episode 85, loss 273.434631
+---------------------------------------
+    episode 86, loss 281.698151
+---------------------------------------
+    episode 87, loss 276.274323
+---------------------------------------
+    episode 88, loss 246.978531
+---------------------------------------
+    episode 89, loss 271.328064
+---------------------------------------
+    episode 90, loss 271.488068
+---------------------------------------
+    episode 91, loss 225.821320
+---------------------------------------
+    episode 92, loss 259.267273
+---------------------------------------
+    episode 93, loss 2290.899902
+---------------------------------------
+    episode 94, loss 2266.488281
+---------------------------------------
+    episode 95, loss 248.539673
+---------------------------------------
+    episode 96, loss 231.251877
+---------------------------------------
+    episode 97, loss 223.082123
+---------------------------------------
+    episode 98, loss 218.458572
+---------------------------------------
+    episode 99, loss 216.484116
+---------------------------------------
+    episode 100, loss 214.485428
+---------------------------------------
+    episode 101, loss 212.478485
+---------------------------------------
+    episode 102, loss 211.039459
+---------------------------------------
+    episode 103, loss 210.946442
+---------------------------------------
+    episode 104, loss 209.200699
+---------------------------------------
+    episode 105, loss 212.718506
+---------------------------------------
+    episode 106, loss 213.269882
+---------------------------------------
+    episode 107, loss 210.848175
+---------------------------------------
+    episode 108, loss 208.564835
+---------------------------------------
+    episode 109, loss 206.865707
+---------------------------------------
+    episode 110, loss 206.905777
+---------------------------------------
+    episode 111, loss 206.489929
+---------------------------------------
+    episode 112, loss 205.670547
+---------------------------------------
+    episode 113, loss 205.954208
+---------------------------------------
+    episode 114, loss 205.362671
+---------------------------------------
+    episode 115, loss 204.183517
+---------------------------------------
+    episode 116, loss 203.886154
+---------------------------------------
+    episode 117, loss 203.192856
+---------------------------------------
+    episode 118, loss 202.213745
+---------------------------------------
+    episode 119, loss 201.721115
+---------------------------------------
+    episode 120, loss 200.919083
+---------------------------------------
+    episode 121, loss 200.703171
+---------------------------------------
+    episode 122, loss 199.534210
+---------------------------------------
+    episode 123, loss 200.817703
+---------------------------------------
+    episode 124, loss 199.913086
+---------------------------------------
+    episode 125, loss 1198.807739
+---------------------------------------
+    episode 126, loss 1198.065063
+---------------------------------------
+    episode 127, loss 1207.132690
+---------------------------------------
+=======================================
+---------------------------------------
+step 0 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 1 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 2 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 3 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 4 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 5 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 6 ---num of clusters 8 -- disconnected
+---------------------------------------
+step 7 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 8 ---num of clusters 7 -- disconnected
+---------------------------------------
+step 9 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 10 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 11 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 12 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 13 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 14 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 15 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 16 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 17 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 18 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 19 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 20 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 21 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 22 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 23 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 24 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 25 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 26 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 27 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 28 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 29 ---num of clusters 6 -- disconnected
+---------------------------------------
+step 30 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 31 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 32 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 33 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 34 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 35 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 36 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 37 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 38 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 39 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 40 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 41 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 42 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 43 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 44 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 45 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 46 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 47 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 48 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 49 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 50 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 51 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 52 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 53 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 54 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 55 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 56 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 57 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 58 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 59 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 60 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 61 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 62 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 63 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 64 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 65 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 66 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 67 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 68 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 69 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 70 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 71 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 72 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 73 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 74 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 75 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 76 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 77 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 78 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 79 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 80 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 81 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 82 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 83 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 84 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 85 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 86 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 87 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 88 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 89 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 90 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 91 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 92 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 93 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 94 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 95 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 96 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 97 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 98 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 99 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 100 ---num of clusters 5 -- disconnected
+---------------------------------------
+step 101 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 102 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 103 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 104 ---num of clusters 4 -- disconnected
+---------------------------------------
+step 105 ---num of clusters 3 -- disconnected
+---------------------------------------
+step 106 ---num of clusters 3 -- disconnected
+---------------------------------------
+step 107 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 108 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 109 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 110 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 111 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 112 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 113 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 114 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 115 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 116 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 117 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 118 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 119 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 120 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 121 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 122 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 123 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 124 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 125 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 126 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 127 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 128 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 129 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 130 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 131 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 132 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 133 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 134 ---num of clusters 2 -- disconnected
+---------------------------------------
+step 135 ---num of clusters 1 -- connected
+---------------------------------------
+step 136 ---num of clusters 1 -- connected
+---------------------------------------
+step 137 ---num of clusters 1 -- connected
+---------------------------------------
+step 138 ---num of clusters 1 -- connected
+---------------------------------------
+step 139 ---num of clusters 1 -- connected
+---------------------------------------
+step 140 ---num of clusters 1 -- connected
+---------------------------------------
+step 141 ---num of clusters 1 -- connected
+---------------------------------------
+step 142 ---num of clusters 1 -- connected
+---------------------------------------
+step 143 ---num of clusters 1 -- connected
+---------------------------------------
+step 144 ---num of clusters 1 -- connected
+---------------------------------------
+step 145 ---num of clusters 1 -- connected
+---------------------------------------
+step 146 ---num of clusters 1 -- connected
+---------------------------------------
+step 147 ---num of clusters 1 -- connected
+---------------------------------------
+step 148 ---num of clusters 1 -- connected
+---------------------------------------
+step 149 ---num of clusters 1 -- connected
+---------------------------------------
+step 150 ---num of clusters 1 -- connected
+---------------------------------------
+step 151 ---num of clusters 1 -- connected
+---------------------------------------
+step 152 ---num of clusters 1 -- connected
+---------------------------------------
+step 153 ---num of clusters 1 -- connected
+---------------------------------------
+step 154 ---num of clusters 1 -- connected
+---------------------------------------
+step 155 ---num of clusters 1 -- connected
+---------------------------------------
+step 156 ---num of clusters 1 -- connected
+---------------------------------------
+step 157 ---num of clusters 1 -- connected
+---------------------------------------
+step 158 ---num of clusters 1 -- connected
+---------------------------------------
+step 159 ---num of clusters 1 -- connected
+---------------------------------------
+step 160 ---num of clusters 1 -- connected
+---------------------------------------
+step 161 ---num of clusters 1 -- connected
+---------------------------------------
+step 162 ---num of clusters 1 -- connected
+---------------------------------------
+step 163 ---num of clusters 1 -- connected
+---------------------------------------
+step 164 ---num of clusters 1 -- connected
+---------------------------------------
+step 165 ---num of clusters 1 -- connected
+---------------------------------------
+step 166 ---num of clusters 1 -- connected
+---------------------------------------
+step 167 ---num of clusters 1 -- connected
+---------------------------------------
+step 168 ---num of clusters 1 -- connected
+---------------------------------------
+step 169 ---num of clusters 1 -- connected
+---------------------------------------
+step 170 ---num of clusters 1 -- connected
+---------------------------------------
+step 171 ---num of clusters 1 -- connected
+---------------------------------------
+step 172 ---num of clusters 1 -- connected
+---------------------------------------
+step 173 ---num of clusters 1 -- connected
+---------------------------------------
+step 174 ---num of clusters 1 -- connected
+---------------------------------------
+step 175 ---num of clusters 1 -- connected
+---------------------------------------
+step 176 ---num of clusters 1 -- connected
+---------------------------------------
+step 177 ---num of clusters 1 -- connected
+---------------------------------------
+step 178 ---num of clusters 1 -- connected
+---------------------------------------
+step 179 ---num of clusters 1 -- connected
+---------------------------------------
+step 180 ---num of clusters 1 -- connected
+---------------------------------------
+step 181 ---num of clusters 1 -- connected
+---------------------------------------
+step 182 ---num of clusters 1 -- connected
+---------------------------------------
+step 183 ---num of clusters 1 -- connected
+---------------------------------------
+step 184 ---num of clusters 1 -- connected
+---------------------------------------
+step 185 ---num of clusters 1 -- connected
+---------------------------------------
+step 186 ---num of clusters 1 -- connected
+---------------------------------------
+step 187 ---num of clusters 1 -- connected
+---------------------------------------
+step 188 ---num of clusters 1 -- connected
+---------------------------------------
+step 189 ---num of clusters 1 -- connected
+---------------------------------------
+step 190 ---num of clusters 1 -- connected
+---------------------------------------
+step 191 ---num of clusters 1 -- connected
+---------------------------------------
+step 192 ---num of clusters 1 -- connected
+---------------------------------------
+step 193 ---num of clusters 1 -- connected
+---------------------------------------
+step 194 ---num of clusters 1 -- connected
+---------------------------------------
+step 195 ---num of clusters 1 -- connected
+---------------------------------------
+step 196 ---num of clusters 1 -- connected
+---------------------------------------
+step 197 ---num of clusters 1 -- connected
+---------------------------------------
+step 198 ---num of clusters 1 -- connected
+---------------------------------------
+step 199 ---num of clusters 1 -- connected
+---------------------------------------
+step 200 ---num of clusters 1 -- connected
+---------------------------------------
+step 201 ---num of clusters 1 -- connected
+---------------------------------------
+step 202 ---num of clusters 1 -- connected
+---------------------------------------
+step 203 ---num of clusters 1 -- connected
+---------------------------------------
+step 204 ---num of clusters 1 -- connected
+---------------------------------------
+step 205 ---num of clusters 1 -- connected
+---------------------------------------
+step 206 ---num of clusters 1 -- connected
+---------------------------------------
+step 207 ---num of clusters 1 -- connected
+---------------------------------------
+step 208 ---num of clusters 1 -- connected
+---------------------------------------
+step 209 ---num of clusters 1 -- connected
+---------------------------------------
+step 210 ---num of clusters 1 -- connected
+---------------------------------------
+step 211 ---num of clusters 1 -- connected
+---------------------------------------
+step 212 ---num of clusters 1 -- connected
+---------------------------------------
+step 213 ---num of clusters 1 -- connected
+---------------------------------------
+step 214 ---num of clusters 1 -- connected
+---------------------------------------
+step 215 ---num of clusters 1 -- connected
+---------------------------------------
+step 216 ---num of clusters 1 -- connected
+---------------------------------------
+step 217 ---num of clusters 1 -- connected
+---------------------------------------
+step 218 ---num of clusters 1 -- connected
+---------------------------------------
+step 219 ---num of clusters 1 -- connected
+---------------------------------------
+step 220 ---num of clusters 1 -- connected
+---------------------------------------
+step 221 ---num of clusters 1 -- connected
+---------------------------------------
+step 222 ---num of clusters 1 -- connected
+---------------------------------------
+step 223 ---num of clusters 1 -- connected
+---------------------------------------
+step 224 ---num of clusters 1 -- connected
+---------------------------------------
+step 225 ---num of clusters 1 -- connected
+---------------------------------------
+step 226 ---num of clusters 1 -- connected
+---------------------------------------
+step 227 ---num of clusters 1 -- connected
+---------------------------------------
+step 228 ---num of clusters 1 -- connected
+---------------------------------------
+step 229 ---num of clusters 1 -- connected
+---------------------------------------
+step 230 ---num of clusters 1 -- connected
+---------------------------------------
+step 231 ---num of clusters 1 -- connected
+---------------------------------------
+step 232 ---num of clusters 1 -- connected
+---------------------------------------
+step 233 ---num of clusters 1 -- connected
+---------------------------------------
+step 234 ---num of clusters 1 -- connected
+---------------------------------------
+step 235 ---num of clusters 1 -- connected
+---------------------------------------
+step 236 ---num of clusters 1 -- connected
+---------------------------------------
+step 237 ---num of clusters 1 -- connected
+---------------------------------------
+step 238 ---num of clusters 1 -- connected
+---------------------------------------
+step 239 ---num of clusters 1 -- connected
+---------------------------------------
+step 240 ---num of clusters 1 -- connected
+---------------------------------------
+step 241 ---num of clusters 1 -- connected
+---------------------------------------
+step 242 ---num of clusters 1 -- connected
+---------------------------------------
+step 243 ---num of clusters 1 -- connected
+---------------------------------------
+step 244 ---num of clusters 1 -- connected
+---------------------------------------
+step 245 ---num of clusters 1 -- connected
+---------------------------------------
+step 246 ---num of clusters 1 -- connected
+---------------------------------------
+step 247 ---num of clusters 1 -- connected
+---------------------------------------
+step 248 ---num of clusters 1 -- connected
+---------------------------------------
+step 249 ---num of clusters 1 -- connected
+---------------------------------------
+step 250 ---num of clusters 1 -- connected
+---------------------------------------
+step 251 ---num of clusters 1 -- connected
+---------------------------------------
+step 252 ---num of clusters 1 -- connected
+---------------------------------------
+step 253 ---num of clusters 1 -- connected
+---------------------------------------
+step 254 ---num of clusters 1 -- connected
+---------------------------------------
+step 255 ---num of clusters 1 -- connected
+---------------------------------------
+step 256 ---num of clusters 1 -- connected
+---------------------------------------
+step 257 ---num of clusters 1 -- connected
+---------------------------------------
+step 258 ---num of clusters 1 -- connected
+---------------------------------------
+step 259 ---num of clusters 1 -- connected
+---------------------------------------
+step 260 ---num of clusters 1 -- connected
+---------------------------------------
+step 261 ---num of clusters 1 -- connected
+---------------------------------------
+step 262 ---num of clusters 1 -- connected
+---------------------------------------
+step 263 ---num of clusters 1 -- connected
+---------------------------------------
+step 264 ---num of clusters 1 -- connected
+---------------------------------------
+step 265 ---num of clusters 1 -- connected
+---------------------------------------
+step 266 ---num of clusters 1 -- connected
+---------------------------------------
+step 267 ---num of clusters 1 -- connected
+---------------------------------------
+step 268 ---num of clusters 1 -- connected
+---------------------------------------
+step 269 ---num of clusters 1 -- connected
+---------------------------------------
+step 270 ---num of clusters 1 -- connected
+---------------------------------------
+step 271 ---num of clusters 1 -- connected
+---------------------------------------
+step 272 ---num of clusters 1 -- connected
+---------------------------------------
+step 273 ---num of clusters 1 -- connected
+---------------------------------------
+step 274 ---num of clusters 1 -- connected
+---------------------------------------
+step 275 ---num of clusters 1 -- connected
+---------------------------------------
+step 276 ---num of clusters 1 -- connected
+---------------------------------------
+step 277 ---num of clusters 1 -- connected
+---------------------------------------
+step 278 ---num of clusters 1 -- connected
+---------------------------------------
+step 279 ---num of clusters 1 -- connected
+---------------------------------------
+step 280 ---num of clusters 1 -- connected
+---------------------------------------
+step 281 ---num of clusters 1 -- connected
+---------------------------------------
+step 282 ---num of clusters 1 -- connected
+---------------------------------------
+step 283 ---num of clusters 1 -- connected
+---------------------------------------
+step 284 ---num of clusters 1 -- connected
+---------------------------------------
+step 285 ---num of clusters 1 -- connected
+---------------------------------------
+step 286 ---num of clusters 1 -- connected
+---------------------------------------
+step 287 ---num of clusters 1 -- connected
+---------------------------------------
+step 288 ---num of clusters 1 -- connected
+---------------------------------------
+step 289 ---num of clusters 1 -- connected
+---------------------------------------
+step 290 ---num of clusters 1 -- connected
+---------------------------------------
+step 291 ---num of clusters 1 -- connected
+---------------------------------------
+step 292 ---num of clusters 1 -- connected
+---------------------------------------
+step 293 ---num of clusters 1 -- connected
+---------------------------------------
+step 294 ---num of clusters 1 -- connected
+---------------------------------------
+step 295 ---num of clusters 1 -- connected
+---------------------------------------
+step 296 ---num of clusters 1 -- connected
+---------------------------------------
+step 297 ---num of clusters 1 -- connected
+---------------------------------------
+step 298 ---num of clusters 1 -- connected
+---------------------------------------
+step 299 ---num of clusters 1 -- connected
+---------------------------------------
+step 300 ---num of clusters 1 -- connected
+---------------------------------------
+step 301 ---num of clusters 1 -- connected
+---------------------------------------
+step 302 ---num of clusters 1 -- connected
+---------------------------------------
+step 303 ---num of clusters 1 -- connected
+---------------------------------------
+step 304 ---num of clusters 1 -- connected
+---------------------------------------
+step 305 ---num of clusters 1 -- connected
+---------------------------------------
+step 306 ---num of clusters 1 -- connected
+---------------------------------------
+step 307 ---num of clusters 1 -- connected
+---------------------------------------
+step 308 ---num of clusters 1 -- connected
+---------------------------------------
+step 309 ---num of clusters 1 -- connected
+---------------------------------------
+step 310 ---num of clusters 1 -- connected
+---------------------------------------
+step 311 ---num of clusters 1 -- connected
+---------------------------------------
+step 312 ---num of clusters 1 -- connected
+---------------------------------------
+step 313 ---num of clusters 1 -- connected
+---------------------------------------
+step 314 ---num of clusters 1 -- connected
+---------------------------------------
+step 315 ---num of clusters 1 -- connected
+---------------------------------------
+step 316 ---num of clusters 1 -- connected
+---------------------------------------
+step 317 ---num of clusters 1 -- connected
+---------------------------------------
+step 318 ---num of clusters 1 -- connected
+---------------------------------------
+step 319 ---num of clusters 1 -- connected
+---------------------------------------
+step 320 ---num of clusters 1 -- connected
+---------------------------------------
+step 321 ---num of clusters 1 -- connected
+---------------------------------------
+step 322 ---num of clusters 1 -- connected
+---------------------------------------
+step 323 ---num of clusters 1 -- connected
+---------------------------------------
+step 324 ---num of clusters 1 -- connected
+---------------------------------------
+step 325 ---num of clusters 1 -- connected
+---------------------------------------
+step 326 ---num of clusters 1 -- connected
+---------------------------------------
+step 327 ---num of clusters 1 -- connected
+---------------------------------------
+step 328 ---num of clusters 1 -- connected
+---------------------------------------
+step 329 ---num of clusters 1 -- connected
+---------------------------------------
+step 330 ---num of clusters 1 -- connected
+---------------------------------------
+step 331 ---num of clusters 1 -- connected
+---------------------------------------
+step 332 ---num of clusters 1 -- connected
+---------------------------------------
+step 333 ---num of clusters 1 -- connected
+---------------------------------------
+step 334 ---num of clusters 1 -- connected
+---------------------------------------
+step 335 ---num of clusters 1 -- connected
+---------------------------------------
+step 336 ---num of clusters 1 -- connected
+---------------------------------------
+step 337 ---num of clusters 1 -- connected
+---------------------------------------
+step 338 ---num of clusters 1 -- connected
+---------------------------------------
+step 339 ---num of clusters 1 -- connected
+---------------------------------------
+step 340 ---num of clusters 1 -- connected
+---------------------------------------
+step 341 ---num of clusters 1 -- connected
+---------------------------------------
+step 342 ---num of clusters 1 -- connected
+---------------------------------------
+step 343 ---num of clusters 1 -- connected
+---------------------------------------
+step 344 ---num of clusters 1 -- connected
+---------------------------------------
+step 345 ---num of clusters 1 -- connected
+---------------------------------------
+step 346 ---num of clusters 1 -- connected
+---------------------------------------
+step 347 ---num of clusters 1 -- connected
+---------------------------------------
+step 348 ---num of clusters 1 -- connected
+---------------------------------------
+step 349 ---num of clusters 1 -- connected
+---------------------------------------
+step 350 ---num of clusters 1 -- connected
+---------------------------------------
+step 351 ---num of clusters 1 -- connected
+---------------------------------------
+step 352 ---num of clusters 1 -- connected
+---------------------------------------
+step 353 ---num of clusters 1 -- connected
+---------------------------------------
+step 354 ---num of clusters 1 -- connected
+---------------------------------------
+step 355 ---num of clusters 1 -- connected
+---------------------------------------
+step 356 ---num of clusters 1 -- connected
+---------------------------------------
+step 357 ---num of clusters 1 -- connected
+---------------------------------------
+step 358 ---num of clusters 1 -- connected
+---------------------------------------
+step 359 ---num of clusters 1 -- connected
+---------------------------------------
+step 360 ---num of clusters 1 -- connected
+---------------------------------------
+step 361 ---num of clusters 1 -- connected
+---------------------------------------
+step 362 ---num of clusters 1 -- connected
+---------------------------------------
+step 363 ---num of clusters 1 -- connected
+---------------------------------------
+step 364 ---num of clusters 1 -- connected
+---------------------------------------
+step 365 ---num of clusters 1 -- connected
+---------------------------------------

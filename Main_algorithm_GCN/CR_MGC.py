@@ -233,7 +233,7 @@ class CR_MGC:
                 max_index = j
         # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
         # my loss function
-        loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
+        loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 50 * np.var(np.sum(A, axis=0))
         # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
         self.optimizer.zero_grad()

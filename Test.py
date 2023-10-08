@@ -2,9 +2,9 @@ import numpy as np
 import Utils
 import random
 
-positions= np.array([[random.randint(0, 100), random.randint(0, 100)] for _ in range(100)])
+positions= np.array([[random.randint(0, 1000), random.randint(0, 1000)] for _ in range(200)])
 # print(positions)
-A = Utils.make_A_matrix(positions, len(positions), 100)
+A = Utils.make_A_matrix(positions, len(positions), 120)
 D = Utils.make_D_matrix(A, len(positions))
 L = D - A
 connected_flag, num_of_clusters = Utils.check_number_of_clusters(L, len(positions))
