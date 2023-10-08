@@ -99,7 +99,8 @@ class CR_MGC:
                 if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                     temp_max = torch.norm(final_positions[j] - remain_positions[j])
                     max_index = j
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
+            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 50 * np.var(np.sum(A, axis=0))
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
             if loss.cpu().data.numpy() < best_loss:
@@ -231,9 +232,7 @@ class CR_MGC:
             if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                 temp_max = torch.norm(final_positions[j] - remain_positions[j])
                 max_index = j
-        # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
-        # my loss function
-        loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 50 * np.var(np.sum(A, axis=0))
+        loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
         # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
         self.optimizer.zero_grad()
