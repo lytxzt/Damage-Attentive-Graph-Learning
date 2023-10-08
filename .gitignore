@@ -4,3 +4,4 @@
 *.gif
 *.pyc
 *.npy
+*log*
