@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 best_hidden_dimension = 500
-best_dropout = 0
+best_dropout = 0.1
 lr = 0.00001
 
 
@@ -25,7 +25,7 @@ class CR_MGC:
         if self.use_cuda:
             self.gcn_network.cuda()
 
-        self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0001)
+        self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
         self.FloatTensor = torch.cuda.FloatTensor if self.use_cuda else torch.FloatTensor
         self.if_meta = use_meta
 
@@ -76,9 +76,13 @@ class CR_MGC:
         print("=======================================")
         for train_step in range(1000):
             # print(train_step)
-            if loss_ > 1000 and train_step > 50:
+            if loss_ > 1000 and train_step > 10:
                 self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
-            if counter_loss > 4 and train_step > 50:
+            # if loss_ < 600:
+            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0000005)
+            # if loss_ < 1000:
+            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
+            if counter_loss > 2 and train_step > 10:
                 break
             final_positions = self.gcn_network(remain_positions, A_hat)
 
@@ -100,8 +104,23 @@ class CR_MGC:
                     temp_max = torch.norm(final_positions[j] - remain_positions[j])
                     max_index = j
             # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 50 * np.var(np.sum(A, axis=0))
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
+
+            ###### my code best ######
+            centroid = torch.mean(final_positions, dim=0)
+            centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
+            # print(centroid)
+            # print(centrepoint)
+
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 1.8*torch.norm(centroid - centrepoint)
+            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+
+            # ###### my code ######
+            # degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
+            # avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.min(degree)
+            # # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + torch.var(degree)
+            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.5*torch.norm(degree - avgdegree)
+            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(degree - avgdegree))
 
             if loss.cpu().data.numpy() < best_loss:
                 best_loss = deepcopy(loss.cpu().data.numpy())

@@ -58,7 +58,14 @@ class GCN_2017:
         A_hat = torch.FloatTensor(A_hat).type(self.FloatTensor)
         best_final_positions = 0
         best_loss = 1000000000000
+        loss_ = 0
+        counter_loss = 0
+
         for train_step in range(1000):
+            if loss_ > 1000 and train_step > 50:
+                self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
+            if counter_loss > 4 and train_step > 50:
+                break
 
             final_positions = self.gcn_network(remain_positions, A_hat)
 
@@ -70,6 +77,9 @@ class GCN_2017:
             D = Utils.make_D_matrix(A, len(A))
             L = D - A
             flag, num = Utils.check_number_of_clusters(L, len(L))
+    
+            degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
+            avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.mean(degree)
             # loss
             temp_max = 0
             max_index = 0
@@ -78,8 +88,17 @@ class GCN_2017:
                 if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                     temp_max = torch.norm(final_positions[j] - remain_positions[j])
                     max_index = j
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
+            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
+
+            ###### my code best ######
+            centroid = torch.mean(final_positions, dim=0)
+            centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
+            # print(centroid)
+            # print(centrepoint)
+
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 1.8*torch.norm(centroid - centrepoint)
+            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
 
             if loss.cpu().data.numpy() < best_loss:
                 best_loss = deepcopy(loss.cpu().data.numpy())
@@ -88,9 +107,17 @@ class GCN_2017:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+
+            loss_ = loss.cpu().data.numpy()
+            if loss_ > 1000 and train_step > 50:
+                counter_loss += 1
+            print("    episode %d, loss %f" % (train_step, loss_))
+            print("---------------------------------------")
+
         speed = np.zeros((config_num_of_agents, 3))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
+        
         for i in range(num_remain):
             if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > 0:
                 speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / np.linalg.norm(
