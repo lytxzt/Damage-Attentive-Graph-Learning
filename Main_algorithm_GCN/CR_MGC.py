@@ -56,6 +56,7 @@ class CR_MGC:
         d_min = smallest_d_algorithm(deepcopy(remain_positions), num_remain, config_communication_range)
         d_max = Utils.calculate_d_max(deepcopy(remain_positions))
         A = Utils.make_A_matrix(remain_positions, num_remain, d_min + (d_max - d_min) * 0.25)
+        # A = Utils.make_A_matrix(remain_positions, num_remain, config_communication_range)
 
         D = Utils.make_D_matrix(A, num_remain)
         L = D - A
@@ -71,9 +72,9 @@ class CR_MGC:
         loss_ = 0
         counter_loss = 0
         
-        print("---------------------------------------")
-        print("start training GCN ... ")
-        print("=======================================")
+        # print("---------------------------------------")
+        # print("start training GCN ... ")
+        # print("=======================================")
         for train_step in range(1000):
             # print(train_step)
             if loss_ > 1000 and train_step > 10:
@@ -82,12 +83,11 @@ class CR_MGC:
             #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0000005)
             # if loss_ < 1000:
             #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
-            if counter_loss > 2 and train_step > 10:
+            if counter_loss > 4 and train_step > 10:
                 break
             final_positions = self.gcn_network(remain_positions, A_hat)
 
-            final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(
-                self.FloatTensor) * final_positions
+            final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
 
             # check if connected
             final_positions_ = final_positions.cpu().data.numpy()
@@ -107,12 +107,18 @@ class CR_MGC:
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
             ###### my code best ######
-            centroid = torch.mean(final_positions, dim=0)
+            degree = torch.Tensor(np.sum(A, axis=0) / np.sum(A)).type(self.FloatTensor).reshape((100,1))
+            centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
+            # centroid = torch.mean(final_positions, dim=0)
+
+            # A_reverse = 99 - A
+            # degree_reverse = torch.Tensor(np.sum(A_reverse, axis=0) / np.sum(A_reverse)).type(self.FloatTensor).reshape((100,1))
+            # centrepoint = torch.sum(torch.mul(final_positions,degree_reverse), dim=0)
             centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
             # print(centroid)
             # print(centrepoint)
 
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 1.8*torch.norm(centroid - centrepoint)
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
             # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
 
             # ###### my code ######
@@ -132,12 +138,12 @@ class CR_MGC:
             loss_ = loss.cpu().data.numpy()
             if loss_ > 1000 and train_step > 50:
                 counter_loss += 1
-            print("    episode %d, loss %f" % (train_step, loss_))
-            print("---------------------------------------")
+            print("    episode %d, loss %f" % (train_step, loss_), end='\r')
+            # print("---------------------------------------")
         speed = np.zeros((config_num_of_agents, 3))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
-        print("=======================================")
+        # print("=======================================")
 
         # store_best_final_positions = pd.DataFrame(best_final_positions)
         # Utils.store_dataframe_to_excel(store_best_final_positions,"Experiment_Fig/Experiment_3_compare_GI/positions_2_2.xlsx")

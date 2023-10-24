@@ -146,10 +146,8 @@ class Swarm:
                 # proposed algorithm
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
-                        if np.linalg.norm(
-                                self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
-                            actions[self.remain_list[i]] = deepcopy(
-                                self.once_destroy_gcn_network_speed[self.remain_list[i]])
+                        if np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
+                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
 
                         # else:
                         #     print("%d already finish" % self.remain_list[i])

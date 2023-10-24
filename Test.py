@@ -1,19 +1,25 @@
 import numpy as np
 import Utils
 import random
+import matplotlib.pyplot as plt
 
-positions= np.array([[random.randint(0, 1000), random.randint(0, 1000)] for _ in range(200)])
-# print(positions)
-A = Utils.make_A_matrix(positions, len(positions), 120)
-D = Utils.make_D_matrix(A, len(positions))
-L = D - A
-connected_flag, num_of_clusters = Utils.check_number_of_clusters(L, len(positions))
-# print(num_of_clusters)
+step_my = [121, 209, 172, 169, 291, 106, 147, 191, 222, 182, 176, 310, 262, 313, 144, 232, 238, 315, 141, 87, 215, 165, 296, 172, 180, 388, 399, 199, 236, 337, 61, 318, 257, 330, 278, 359, 170, 168, 297, 99, 107, 204, 208, 313, 197, 190, 139, 285, 140, 189, 346, 306, 234, 213, 105, 250, 312, 239, 212, 239, 117, 164, 163, 190, 315, 166, 291, 259, 264, 126, 197, 224, 289, 109, 198, 171, 269, 331, 182, 100, 96, 171, 102, 339, 299, 269, 231, 329, 150, 300, 185, 181, 94, 134, 112, 230, 143, 242, 152, 363]
+# step_my = step_my[0:20]
+step_mgcn = [138, 362, 294, 399, 346, 119, 324, 229, 156, 175]
 
-# e_vals, e_vecs = np.linalg.eig(A)
-# # print(e_vals, e_vecs)
-# print(max(e_vals), np.argmax(e_vals))
-# print(e_vecs[:, np.argmax(e_vals)], np.var(e_vecs[np.argmax(e_vals),:]))
+step_my = np.array(step_my)
+step_mgcn = np.array(step_mgcn)
 
-degree = np.sum(A, axis=0)
-print(degree, np.var(degree))
+print(np.mean(step_my), np.mean(step_mgcn))
+
+# np_rand_seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20, 39, 19, 89, 75, 79, 55, 61, 74, 8, 89, 83, 3, 38, 88, 56, 68, 67, 46, 48, 63, 54, 43, 52, 72, 75, 21, 64, 44, 50, 77, 39, 14, 18, 66, 82, 51, 65, 90, 57, 35, 92, 74, 9, 64, 52, 91, 56, 87, 77, 82, 34, 38, 38, 97, 3, 85, 67, 15, 86, 21, 67, 68, 98, 99, 32, 100, 48, 19, 85, 67, 81, 25, 64, 23, 37, 87, 31, 8, 96, 47, 63, 57, 1, 66, 18, 89, 54, 60, 58, 25]
+# rand_seed = [47, 94, 7, 7, 1, 31, 7, 33, 80, 43, 74, 82, 61, 93, 96, 93, 95, 13, 5, 75, 7, 71, 23, 14, 78, 38, 38, 40, 89, 57, 20, 1, 86, 97, 13, 79, 27, 47, 67, 19, 96, 27, 54, 44, 26, 84, 55, 42, 61, 43, 94, 84, 17, 65, 91, 52, 48, 34, 90, 84, 31, 90, 51, 74, 1, 21, 94, 44, 28, 19, 70, 95, 69, 36, 71, 90, 67, 82, 46, 91, 20, 21, 73, 67, 9, 58, 34, 59, 92, 23, 42, 7, 19, 5, 91, 42, 73, 15, 47, 1]
+
+# print(np_rand_seed[31], rand_seed[31])
+
+figure,axes=plt.subplots()
+axes.boxplot([step_mgcn, step_my],patch_artist=True) #描点上色
+axes.yaxis.grid(True)
+axes.set_ylabel('Recovery Step')
+plt.setp(axes, xticks=[1,2], xticklabels=['CR_MGC', 'ECR_GCN'])
+plt.show()

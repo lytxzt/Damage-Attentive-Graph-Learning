@@ -92,12 +92,18 @@ class GCN_2017:
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
             ###### my code best ######
-            centroid = torch.mean(final_positions, dim=0)
+            degree = torch.Tensor(np.sum(A, axis=0) / np.sum(A)).type(self.FloatTensor).reshape((100,1))
+            centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
+            # centroid = torch.mean(final_positions, dim=0)
+
+            # A_reverse = 99 - A
+            # degree_reverse = torch.Tensor(np.sum(A_reverse, axis=0) / np.sum(A_reverse)).type(self.FloatTensor).reshape((100,1))
+            # centrepoint = torch.sum(torch.mul(final_positions,degree_reverse), dim=0)
             centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
             # print(centroid)
             # print(centrepoint)
 
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 1.8*torch.norm(centroid - centrepoint)
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
             # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
 
             if loss.cpu().data.numpy() < best_loss:

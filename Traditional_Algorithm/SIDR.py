@@ -24,7 +24,7 @@ def SIDR(positions, remain_list):
         true_cluster_index.append(deepcopy(temp_true_index))
 
     speed = np.zeros((config_num_of_agents, 3))
-    trajectory_point = np.array([500, 500, 50])
+    trajectory_point = np.array([500, 500, 0])
     for num_c in range(len(true_cluster_index)):
         temp_positions = []
         for i in true_cluster_index[num_c]:
