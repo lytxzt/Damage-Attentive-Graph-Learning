@@ -4,6 +4,7 @@ from Configurations import *
 from Environment import Environment
 from Main_algorithm_GCN.GCO import GCO
 from Main_algorithm_GCN.CR_MGC import CR_MGC
+from Main_algorithm_GCN.ECR_GCN import ECR_GCN
 from Traditional_Algorithm.GCN_2017 import GCN_2017
 from Traditional_Algorithm.Centering import centering_fly
 from Traditional_Algorithm.SIDR import SIDR
@@ -35,6 +36,7 @@ class Swarm:
         self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, 3))
         self.max_time = 0
 
+        self.ecr_gcn = ECR_GCN()
         self.cr_gcm = CR_MGC(use_meta=meta_param_use)
         self.gcn_2017 = GCN_2017()
 
@@ -142,6 +144,7 @@ class Swarm:
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
+
             elif self.algorithm_mode == 5:
                 # proposed algorithm
                 if self.if_once_gcn_network:
@@ -155,6 +158,24 @@ class Swarm:
                 else:
                     self.if_once_gcn_network = True
                     actions, max_time, best_final_positions = self.cr_gcm.cr_gcm(deepcopy(self.true_positions),
+                                                                                 deepcopy(self.remain_list))
+                    self.once_destroy_gcn_network_speed = deepcopy(actions)
+                    self.best_final_positions = deepcopy(best_final_positions)
+                    self.max_time = deepcopy(max_time)
+
+            elif self.algorithm_mode == 6:
+                # proposed algorithm
+                if self.if_once_gcn_network:
+                    for i in range(len(self.remain_list)):
+                        if np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
+                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
+
+                        # else:
+                        #     print("%d already finish" % self.remain_list[i])
+                    max_time = deepcopy(self.max_time)
+                else:
+                    self.if_once_gcn_network = True
+                    actions, max_time, best_final_positions = self.ecr_gcn.ecr_gcn(deepcopy(self.true_positions),
                                                                                  deepcopy(self.remain_list))
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)

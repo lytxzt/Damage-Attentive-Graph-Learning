@@ -31,13 +31,14 @@ meta_param_use = False
                     5 for CR-MGC (proposed algorithm)
 """
 # set this value to 5 to run the proposed algorithm
-config_algorithm_mode = 5
+config_algorithm_mode = 6
 algorithm_mode = {0: "CSDS",
                   1: "HERO",
                   2: "CEN",
                   3: "SIDR",
                   4: "GCN_2017",
-                  5: "CR-MGC (proposed algorithm)"}
+                  5: "CR-MGC",
+                  6: "ECR-GCN"}
 
 print("SCC problem Starts...")
 print("------------------------------")

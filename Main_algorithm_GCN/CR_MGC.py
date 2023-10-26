@@ -103,30 +103,8 @@ class CR_MGC:
                 if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                     temp_max = torch.norm(final_positions[j] - remain_positions[j])
                     max_index = j
-            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
-
-            ###### my code best ######
-            degree = torch.Tensor(np.sum(A, axis=0) / np.sum(A)).type(self.FloatTensor).reshape((100,1))
-            centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
-            # centroid = torch.mean(final_positions, dim=0)
-
-            # A_reverse = 99 - A
-            # degree_reverse = torch.Tensor(np.sum(A_reverse, axis=0) / np.sum(A_reverse)).type(self.FloatTensor).reshape((100,1))
-            # centrepoint = torch.sum(torch.mul(final_positions,degree_reverse), dim=0)
-            centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
-            # print(centroid)
-            # print(centrepoint)
-
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
-            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
-
-            # ###### my code ######
-            # degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
-            # avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.min(degree)
-            # # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + torch.var(degree)
-            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.5*torch.norm(degree - avgdegree)
-            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(degree - avgdegree))
 
             if loss.cpu().data.numpy() < best_loss:
                 best_loss = deepcopy(loss.cpu().data.numpy())
@@ -429,7 +407,7 @@ class GraphConvolution(Module):
 
     def forward(self, input, adj):
         support = torch.mm(input, self.weight)
-        output = torch.mm(adj, support)
+        output = torch.spmm(adj, support)
         if self.bias is not None:
             return output + self.bias
         else:

@@ -2,57 +2,59 @@ from copy import deepcopy
 from torch.optim import Adam
 import Utils
 from Configurations import *
+from Main_algorithm_GCN.Smallest_d_algorithm import smallest_d_algorithm
 import math
 import torch
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-from Main_algorithm_GCN.Smallest_d_algorithm import smallest_d_algorithm
 
 best_hidden_dimension = 500
 best_dropout = 0.1
+lr = 0.00001
 
 
-class GCN_2017:
+class ECR_GCN:
     def __init__(self):
         self.hidden_dimension = best_hidden_dimension
         self.dropout_value = best_dropout
         self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
                                                dropout=self.dropout_value, if_dropout=True, bias=True)
-        use_cuda = torch.cuda.is_available()
-        if use_cuda:
+        self.use_cuda = torch.cuda.is_available()
+        if self.use_cuda:
             self.gcn_network.cuda()
 
-        self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0001)
-        self.FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
+        # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
+        self.FloatTensor = torch.cuda.FloatTensor if self.use_cuda else torch.FloatTensor
 
-    def cr_gcm_n(self, global_positions, remain_list):
-        start = time.perf_counter()
+        self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
+                                               dropout=self.dropout_value, if_dropout=True, bias=True)
+        self.gcn_network.cuda()
+
+        self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0001)
+
+    def ecr_gcn(self, global_positions, remain_list):
         remain_positions = []
         for i in remain_list:
             remain_positions.append(deepcopy(global_positions[i]))
         remain_positions = np.array(remain_positions)
         num_remain = len(remain_list)
 
-        # 2017
-        # A = Utils.make_A_matrix(remain_positions, len(remain_positions), config_communication_range)
-        # A_tilde = A + np.identity(len(A))
-        # D_tilde = Utils.make_D_matrix(A_tilde, len(remain_positions))
-
-        # D_tilde_sqrt = np.diag(D_tilde.diagonal() ** (-0.5))
-        # A_hat = D_tilde_sqrt.dot(A_tilde).dot(D_tilde_sqrt)
-        
-        # test
+        # proposed
         d_min = smallest_d_algorithm(deepcopy(remain_positions), num_remain, config_communication_range)
         d_max = Utils.calculate_d_max(deepcopy(remain_positions))
         A = Utils.make_A_matrix(remain_positions, num_remain, d_min + (d_max - d_min) * 0.25)
+        # A = Utils.make_A_matrix(remain_positions, num_remain, config_communication_range)
 
         D = Utils.make_D_matrix(A, num_remain)
-        D_sqrt = np.diag(D.diagonal() ** (-0.5))
-        A_hat = np.eye(num_remain) - 0.99*D_sqrt.dot(A).dot(D_sqrt)
-        print(A_hat)
+        L = D - A
+        A_norm = np.linalg.norm(A, ord=np.inf)
+        print(A_norm, np.max(D))
+        k0 = 1 / A_norm
+        K = 0.99 * k0
+        A_hat = np.eye(num_remain) - K * L
+        # print(A_hat)
 
         remain_positions = torch.FloatTensor(remain_positions).type(self.FloatTensor)
         A_hat = torch.FloatTensor(A_hat).type(self.FloatTensor)
@@ -60,16 +62,23 @@ class GCN_2017:
         best_loss = 1000000000000
         loss_ = 0
         counter_loss = 0
-
-        for train_step in range(10000):
-            if loss_ > 1000 and train_step > 50:
+        
+        # print("---------------------------------------")
+        # print("start training GCN ... ")
+        # print("=======================================")
+        for train_step in range(1000):
+            # print(train_step)
+            if loss_ > 1000 and train_step > 10:
                 self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
-            if counter_loss > 4 and train_step > 50:
+            # if loss_ < 600:
+            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0000005)
+            # if loss_ < 1000:
+            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
+            if counter_loss > 4 and train_step > 10:
                 break
-
             final_positions = self.gcn_network(remain_positions, A_hat)
 
-            final_positions = 0.5 * torch.Tensor(np.array([1000, 1000, 100])).type(self.FloatTensor) * final_positions
+            final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
 
             # check if connected
             final_positions_ = final_positions.cpu().data.numpy()
@@ -77,9 +86,6 @@ class GCN_2017:
             D = Utils.make_D_matrix(A, len(A))
             L = D - A
             flag, num = Utils.check_number_of_clusters(L, len(L))
-    
-            degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
-            avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.mean(degree)
             # loss
             temp_max = 0
             max_index = 0
@@ -88,7 +94,7 @@ class GCN_2017:
                 if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
                     temp_max = torch.norm(final_positions[j] - remain_positions[j])
                     max_index = j
-            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])
+            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
             # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
 
             ###### my code best ######
@@ -103,8 +109,15 @@ class GCN_2017:
             # print(centroid)
             # print(centrepoint)
 
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.45*torch.norm(centroid - centrepoint)
-            print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
+            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+
+            # ###### my code ######
+            # degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
+            # avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.min(degree)
+            # # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + torch.var(degree)
+            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.5*torch.norm(degree - avgdegree)
+            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(degree - avgdegree))
 
             if loss.cpu().data.numpy() < best_loss:
                 best_loss = deepcopy(loss.cpu().data.numpy())
@@ -113,17 +126,19 @@ class GCN_2017:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
             loss_ = loss.cpu().data.numpy()
             if loss_ > 1000 and train_step > 50:
                 counter_loss += 1
-            print("    episode %d, loss %f" % (train_step, loss_))
-            print("---------------------------------------")
-
+            print("    episode %d, loss %f" % (train_step, loss_), end='\r')
+            # print("---------------------------------------")
         speed = np.zeros((config_num_of_agents, 3))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
-        
+        # print("=======================================")
+
+        # store_best_final_positions = pd.DataFrame(best_final_positions)
+        # Utils.store_dataframe_to_excel(store_best_final_positions,"Experiment_Fig/Experiment_3_compare_GI/positions_2_2.xlsx")
+
         for i in range(num_remain):
             if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > 0:
                 speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / np.linalg.norm(
@@ -133,9 +148,11 @@ class GCN_2017:
 
         max_time = temp_max_distance / config_constant_speed
         # print(max_time)
-        end = time.perf_counter()
-        print(end-start)
         return deepcopy(speed), deepcopy(max_time), deepcopy(best_final_positions)
+
+    def save_GCN(self, counter):
+        torch.save(self.gcn_network, "Trainable_GCN/meta_parameters/GCN__small_small_scale_%d.pkl" % counter)
+
 
 class GraphConvolution(Module):
     def __init__(self, in_features, out_features, bias=True):
@@ -157,7 +174,7 @@ class GraphConvolution(Module):
 
     def forward(self, input, adj):
         support = torch.mm(input, self.weight)
-        output = torch.mm(adj, support)
+        output = torch.spmm(adj, support)
         if self.bias is not None:
             return output + self.bias
         else:
