@@ -10,27 +10,28 @@ from torch.nn.modules.module import Module
 import torch.nn as nn
 import torch.nn.functional as F
 
-best_hidden_dimension = 500
-best_dropout = 0.1
-lr = 0.00001
+import matplotlib.pyplot as plt
 
+best_hidden_dimension = 256
+best_dropout = 0.1
+# lr = 0.00001
+use_gradnorm = True
+alpha = 0.12
+draw = True
+
+dimension = config_dimension
 
 class ECR_GCN:
     def __init__(self):
         self.hidden_dimension = best_hidden_dimension
         self.dropout_value = best_dropout
-        self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
-                                               dropout=self.dropout_value, if_dropout=True, bias=True)
+        self.gcn_network = GCN_fixed_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension, dropout=self.dropout_value, if_dropout=True, bias=True)
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
             self.gcn_network.cuda()
 
         # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
         self.FloatTensor = torch.cuda.FloatTensor if self.use_cuda else torch.FloatTensor
-
-        self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
-                                               dropout=self.dropout_value, if_dropout=True, bias=True)
-        self.gcn_network.cuda()
 
         self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0001)
 
@@ -50,11 +51,18 @@ class ECR_GCN:
         D = Utils.make_D_matrix(A, num_remain)
         L = D - A
         A_norm = np.linalg.norm(A, ord=np.inf)
-        print(A_norm, np.max(D))
         k0 = 1 / A_norm
         K = 0.99 * k0
         A_hat = np.eye(num_remain) - K * L
         # print(A_hat)
+
+        # my
+        # D_hat = D + np.eye(num_remain)
+        # D_hat = np.linalg.matrix_power(D_hat, -1)
+        # A_hat = np.eye(num_remain) - 0.9 *D_hat.dot(L)
+        # print(A_hat)
+        degree_init = torch.Tensor(np.diag(D).copy()).type(self.FloatTensor)
+        A_init = deepcopy(A)
 
         remain_positions = torch.FloatTensor(remain_positions).type(self.FloatTensor)
         A_hat = torch.FloatTensor(A_hat).type(self.FloatTensor)
@@ -68,17 +76,21 @@ class ECR_GCN:
         # print("=======================================")
         for train_step in range(1000):
             # print(train_step)
-            if loss_ > 1000 and train_step > 10:
-                self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
+            if loss_ > 1000 and train_step > 50:
+                self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0001)
             # if loss_ < 600:
             #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0000005)
             # if loss_ < 1000:
             #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
-            if counter_loss > 4 and train_step > 10:
+            if counter_loss > 4 and train_step > 50:
                 break
             final_positions = self.gcn_network(remain_positions, A_hat)
 
-            final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
+            if dimension == 3:
+                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
+            else:
+                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length])).type(self.FloatTensor) * final_positions
+            # if train_step == 0: print(final_positions)
 
             # check if connected
             final_positions_ = final_positions.cpu().data.numpy()
@@ -87,51 +99,156 @@ class ECR_GCN:
             L = D - A
             flag, num = Utils.check_number_of_clusters(L, len(L))
             # loss
-            temp_max = 0
-            max_index = 0
+            if use_gradnorm:
+                loss =[]
 
-            for j in range(len(final_positions)):
-                if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
-                    temp_max = torch.norm(final_positions[j] - remain_positions[j])
-                    max_index = j
-            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index])  
-            # loss_F = 1000 * (num - 1) + torch.norm(final_positions-F,p='fro')
+                # loss1
+                temp_max, max_index = 0, 0
+                for j in range(len(final_positions)):
+                    if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
+                        temp_max = torch.norm(final_positions[j] - remain_positions[j])
+                        max_index = j
 
-            ###### my code best ######
-            degree = torch.Tensor(np.sum(A, axis=0) / np.sum(A)).type(self.FloatTensor).reshape((100,1))
-            centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
-            # centroid = torch.mean(final_positions, dim=0)
+                loss.append(torch.norm(final_positions[max_index] - remain_positions[max_index]))
 
-            # A_reverse = 99 - A
-            # degree_reverse = torch.Tensor(np.sum(A_reverse, axis=0) / np.sum(A_reverse)).type(self.FloatTensor).reshape((100,1))
-            # centrepoint = torch.sum(torch.mul(final_positions,degree_reverse), dim=0)
-            centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
-            # print(centroid)
-            # print(centrepoint)
+                # loss2
+                degree = torch.Tensor(np.sum(A_init, axis=0) / np.sum(A_init)).type(self.FloatTensor).reshape((100,1))
+                centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
+                # centroid = torch.mean(final_positions, dim=0)
 
-            loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
-            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+                # centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
+                centrepoint = 0.5*torch.max(remain_positions, dim=0)[0] + 0.5*torch.min(remain_positions, dim=0)[0]
 
-            # ###### my code ######
-            # degree = torch.Tensor(np.sum(A, axis=0)).type(self.FloatTensor)
-            # avgdegree = torch.Tensor(np.ones(degree.shape)).type(self.FloatTensor) * torch.min(degree)
-            # # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + torch.var(degree)
-            # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.5*torch.norm(degree - avgdegree)
-            # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(degree - avgdegree))
+                degree_rv = 100-np.sum(A_init, axis=0)
+                degree_rv = torch.Tensor(degree_rv/ np.sum(degree_rv)).type(self.FloatTensor).reshape((100,1))
+                centroid_rv = torch.sum(torch.mul(remain_positions,degree_rv), dim=0)
 
-            if loss.cpu().data.numpy() < best_loss:
-                best_loss = deepcopy(loss.cpu().data.numpy())
-                best_final_positions = deepcopy(final_positions.cpu().data.numpy())
+                # print(centroid, centrepoint)
+                loss.append(torch.norm(centroid - centrepoint))
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-            loss_ = loss.cpu().data.numpy()
-            if loss_ > 1000 and train_step > 50:
-                counter_loss += 1
-            print("    episode %d, loss %f" % (train_step, loss_), end='\r')
+                # loss 3
+                degree = torch.Tensor(np.diag(D).copy()).type(self.FloatTensor)
+                # print((degree-degree_init) - torch.mean(degree-degree_init))
+                # print(degree)
+                # print(torch.norm((degree-degree_init) / 100))
+                # loss.append(torch.var(degree-degree_init))
+                print(loss)
+
+
+                loss = torch.stack(loss)
+
+                # initialization
+                if train_step == 0:
+                    loss_weights = torch.ones_like(loss)
+                    # loss_weights = torch.tensor((1,0.55)).cuda()
+                    loss_weights = torch.nn.Parameter(loss_weights)
+                    T = loss_weights.sum().detach()
+                    loss_optimizer = Adam([loss_weights], lr=0.01)
+                    l0 = loss.detach()
+                    layer = self.gcn_network.gc8
+
+                # compute the weighted loss
+                weighted_loss = 1000 * (num - 1) + loss_weights @ loss + torch.var(degree-degree_init)
+                # print(weighted_loss.cpu().data.numpy())
+                if weighted_loss.cpu().data.numpy() < best_loss:
+                    best_loss = deepcopy(weighted_loss.cpu().data.numpy())
+                    best_final_positions = deepcopy(final_positions.cpu().data.numpy())
+
+                # clear gradients of network
+                self.optimizer.zero_grad()
+                # backward pass for weigthted task loss
+                weighted_loss.backward(retain_graph=True)
+                # compute the L2 norm of the gradients for each task
+                gw = []
+                for i in range(len(loss)):
+                    dl = torch.autograd.grad(loss_weights[i]*loss[i], layer.parameters(), retain_graph=True, create_graph=True)[0]
+                    gw.append(torch.norm(dl))
+                gw = torch.stack(gw)
+                # compute loss ratio per task
+                loss_ratio = loss.detach() / l0
+                # compute the relative inverse training rate per task
+                rt = loss_ratio / loss_ratio.mean()
+                # compute the average gradient norm
+                gw_avg = gw.mean().detach()
+                # compute the GradNorm loss
+                constant = (gw_avg * rt ** alpha).detach()
+                gradnorm_loss = torch.abs(gw - constant).sum()
+                # clear gradients of loss_weights
+                loss_optimizer.zero_grad()
+                # backward pass for GradNorm
+                gradnorm_loss.backward()
+                # log loss_weights and loss
+                # update model loss_weights
+                self.optimizer.step()
+                # update loss loss_weights
+                loss_optimizer.step()
+                # renormalize loss_weights
+                loss_weights = (loss_weights / loss_weights.sum() * T).detach()
+                loss_weights = torch.nn.Parameter(loss_weights)
+                loss_optimizer = torch.optim.Adam([loss_weights], lr=0.01)
+                
+                loss_ = weighted_loss.cpu().data.numpy()
+                print(f"episode {train_step}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
+                # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+
+            else:
+                temp_max = 0
+                max_index = 0
+
+                for j in range(len(final_positions)):
+                    if torch.norm(final_positions[j] - remain_positions[j]) > temp_max:
+                        temp_max = torch.norm(final_positions[j] - remain_positions[j])
+                        max_index = j
+
+                ###### my code best ######
+                degree = torch.Tensor(np.sum(A, axis=0) / np.sum(A)).type(self.FloatTensor).reshape((100,1))
+                centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
+                # centroid = torch.mean(final_positions, dim=0)
+
+                # centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
+                centrepoint = 0.5*torch.max(remain_positions, dim=0)[0] + 0.5*torch.min(remain_positions, dim=0)[0]
+                # print(centroid)
+                # print(centrepoint)
+
+                loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + 0.55*torch.norm(centroid - centrepoint)
+                
+                # degree = torch.Tensor(np.diag(D)).type(self.FloatTensor)
+                # loss = 1000 * (num - 1) + torch.norm(final_positions[max_index] - remain_positions[max_index]) + torch.norm((degree-degree_init))
+                # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
+
+                if loss.cpu().data.numpy() < best_loss:
+                    best_loss = deepcopy(loss.cpu().data.numpy())
+                    best_final_positions = deepcopy(final_positions.cpu().data.numpy())
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                loss_ = loss.cpu().data.numpy()
+                print("episode %d, loss %f" % (train_step, loss_))
             # print("---------------------------------------")
-        speed = np.zeros((config_num_of_agents, 3))
+            
+            if loss_ > 1000 and num > 1 and train_step > 50:
+                counter_loss += 1
+            else:
+                counter_loss = 0
+
+            
+            if draw and train_step % 50 == 0:
+                centroid_ = centroid.cpu().data.numpy()
+                centrepoint_ = centrepoint.cpu().data.numpy()
+                # centroid_rv_ = centroid_rv.cpu().data.numpy()
+                remain_positions_ = remain_positions.cpu().data.numpy()
+
+                plt.scatter(final_positions_[:,0], final_positions_[:,1], c='g')
+                plt.scatter(remain_positions_[:,0], remain_positions_[:,1], c='black')
+                plt.scatter(centroid_[0], centroid_[1], c='r')
+                plt.scatter(centrepoint_[0], centrepoint_[1], c='b')
+                # plt.scatter(centroid_rv_[0], centroid_rv_[1], c='y')
+                plt.xlim(0, 1000)
+                plt.ylim(0, 1000)
+                plt.show()
+
+        speed = np.zeros((config_num_of_agents, dimension))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
         # print("=======================================")
@@ -141,13 +258,23 @@ class ECR_GCN:
 
         for i in range(num_remain):
             if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > 0:
-                speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / np.linalg.norm(
-                    best_final_positions[i] - remain_positions_numpy[i])
+                speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i])
             if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > temp_max_distance:
                 temp_max_distance = deepcopy(np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]))
 
         max_time = temp_max_distance / config_constant_speed
+
+        if draw:
+            remain_positions_ = remain_positions.cpu().data.numpy()
+
+            plt.scatter(remain_positions_[:,0], remain_positions_[:,1], c='black')
+            plt.scatter(best_final_positions[:,0], best_final_positions[:,1], c='g')
+            plt.text(10, 10, f'best time: {max_time}')
+            plt.xlim(0, 1000)
+            plt.ylim(0, 1000)
+            plt.show()
         # print(max_time)
+
         return deepcopy(speed), deepcopy(max_time), deepcopy(best_final_positions)
 
     def save_GCN(self, counter):

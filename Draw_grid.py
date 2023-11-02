@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
-np.random.seed(57)
-random.seed(77)
+np.random.seed(17)
+random.seed(18)
 
 environment = Environment()
 swarm = Swarm()
@@ -45,6 +45,7 @@ ylist = np.linspace(0, 1000, 1000)
 xlist, ylist = np.meshgrid(xlist, ylist)
 
 zdata = griddata((x, y), z, (xlist, ylist), method='cubic')
+# print(np.argmax(zdata))
 # zdata = np.sqrt(xlist**2+ylist**2)
 
 # fig = plt.figure()
@@ -57,7 +58,8 @@ zdata = griddata((x, y), z, (xlist, ylist), method='cubic')
 
 # sns.heatmap(zdata, cmap="jet")
 ax=plt.gca()
-plt.imshow(zdata, cmap='jet', vmin=0, vmax=10)
+# plt.imshow(zdata, cmap='jet', vmin=0, vmax=10)
 plt.scatter(x, y, c='g', s=30)
+# plt.scatter(xsort, ysort, c='r', s=30)
 ax.invert_yaxis()
 plt.show()

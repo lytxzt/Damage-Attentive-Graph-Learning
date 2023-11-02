@@ -31,13 +31,14 @@ meta_param_use = False
                     5 for CR-MGC (proposed algorithm)
 """
 # set this value to 5 to run the proposed algorithm
-config_algorithm_mode = 3
+config_algorithm_mode = 6
 algorithm_mode = {0: "CSDS",
                   1: "HERO",
                   2: "CEN",
                   3: "SIDR",
                   4: "GCN_2017",
-                  5: "CR-MGC (proposed algorithm)"}
+                  5: "CR-MGC",
+                  6: "ECR-GCN"}
 
 print("SCC problem Starts...")
 print("------------------------------")
@@ -54,10 +55,8 @@ storage_remain_connectivity_matrix = []
 config_num_destructed_UAVs = 100  # should be in the range of [1, config_num_-2]
 
 # change the seed to alternate the UED
-np_rand_seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20, 39, 19, 89, 75, 79, 55, 61, 74, 8, 89, 83, 3, 38, 88, 56, 68, 67, 46, 48, 63, 54, 43, 52, 72, 75, 21, 64, 44, 50, 77, 39, 14, 18, 66, 82, 51, 65, 90, 57, 35, 92, 74, 9, 64, 52, 91, 56, 87, 77, 82, 34, 38, 38, 97, 3, 85, 67, 15, 86, 21, 67, 68, 98, 99, 32, 100, 48, 19, 85, 67, 81, 25, 64, 23, 37, 87, 31, 8, 96, 47, 63, 57, 1, 66, 18, 89, 54, 60, 58, 25]
-rand_seed = [47, 94, 7, 7, 1, 31, 7, 33, 80, 43, 74, 82, 61, 93, 96, 93, 95, 13, 5, 75, 7, 71, 23, 14, 78, 38, 38, 40, 89, 57, 20, 1, 86, 97, 13, 79, 27, 47, 67, 19, 96, 27, 54, 44, 26, 84, 55, 42, 61, 43, 94, 84, 17, 65, 91, 52, 48, 34, 90, 84, 31, 90, 51, 74, 1, 21, 94, 44, 28, 19, 70, 95, 69, 36, 71, 90, 67, 82, 46, 91, 20, 21, 73, 67, 9, 58, 34, 59, 92, 23, 42, 7, 19, 5, 91, 42, 73, 15, 47, 1]
+seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20, 39, 19, 89, 75, 79, 55, 61, 74, 8, 89, 83, 3, 38, 88, 56, 68, 67, 46, 48, 63, 54, 43, 52, 72, 75, 21, 64, 44, 50, 77, 39, 14, 18, 66, 82, 51, 65, 90, 57, 35, 92, 74, 9, 64, 52, 91, 56, 87, 77, 82, 34, 38, 38, 97, 3, 85, 67, 15, 86, 21, 67, 68, 98, 99, 32, 100, 48, 19, 85, 67, 81, 25, 64, 23, 37, 87, 31, 8, 96, 47, 63, 57, 1, 66, 18, 89, 54, 60, 58, 25]
 # np_rand_seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20]
-# rand_seed = [47, 94, 7, 7, 1, 31, 7, 33, 80, 43]
 # np.random.seed(17)
 # random.seed(18)
 
@@ -65,7 +64,7 @@ storage_random_seed = []
 storage_connect_step = []
 storage_connect_positons = []
 
-for case in range(40,50):
+for case in range(50):
     environment = Environment()
     if algorithm_mode == 0:
         swarm = Swarm(algorithm_mode=config_algorithm_mode, enable_csds=True, meta_param_use=meta_param_use)
@@ -76,8 +75,8 @@ for case in range(40,50):
     environment_positions = environment.reset()
     swarm.reset()
 
-    np.random.seed(np_rand_seed[case])
-    random.seed(rand_seed[case])
+    np.random.seed(seed[case])
+    random.seed(seed[case])
 
     # destruction
     storage_remain_list.append(deepcopy(swarm.remain_list))

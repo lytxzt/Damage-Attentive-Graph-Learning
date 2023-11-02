@@ -10,7 +10,7 @@ class HERO:
         self.num_of_agents = len(self.init_positions)
 
         self.A = Utils.make_A_matrix(self.init_positions, self.num_of_agents, config_communication_range)
-        self.mean = np.zeros((self.num_of_agents, 3))
+        self.mean = np.zeros((self.num_of_agents, config_dimension))
         self.num_of_neighbors = np.zeros(self.num_of_agents)
         for i in range(self.num_of_agents):
             for j in range(self.num_of_agents):
@@ -22,9 +22,9 @@ class HERO:
         self.changed_mean = deepcopy(self.mean)
 
     def hero(self, destroy_index, current_positions):
-        speed = np.zeros((self.num_of_agents, 3))
+        speed = np.zeros((self.num_of_agents, config_dimension))
         self.num_of_neighbors = np.zeros(self.num_of_agents)
-        self.changed_mean = np.zeros((self.num_of_agents, 3))
+        self.changed_mean = np.zeros((self.num_of_agents, config_dimension))
         for i in range(self.num_of_agents):
             if i not in destroy_index:
                 temp_flag = False

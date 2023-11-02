@@ -14,8 +14,9 @@ np.random.seed(1)
 random.seed(2)
 torch.manual_seed(1)
 
-config_initial_swarm_positions = pd.read_excel("Configurations/swarm_positions_200_2D.xlsx")
-config_initial_swarm_positions = config_initial_swarm_positions.values[:, 1:4]
+config_dimension = 2
+config_initial_swarm_positions = pd.read_excel("Configurations/swarm_positions_200.xlsx")
+config_initial_swarm_positions = config_initial_swarm_positions.values[:, 1:1+config_dimension]
 config_initial_swarm_positions = np.array(config_initial_swarm_positions, dtype=np.float64)
 
 # configurations on swarm

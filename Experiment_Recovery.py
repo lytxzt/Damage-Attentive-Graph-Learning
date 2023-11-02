@@ -65,10 +65,9 @@ storage_remain_connectivity_matrix = []
 config_num_destructed_UAVs = 100  # should be in the range of [1, config_num_-2]
 
 # change the seed to alternate the UED
+seed = 42
 np.random.seed(17)
 random.seed(18)
-# np.random.seed(57)
-# random.seed(77)
 
 # destruction
 storage_remain_list.append(deepcopy(swarm.remain_list))
@@ -140,10 +139,10 @@ for step in range(200):
     num_cluster_list.append(temp_cluster)
     print("---------------------------------------")
     if temp_cluster == 1:
-        print("step %d ---num of clusters %d -- connected" % (step, environment.check_the_clusters()))
+        print(f"step {step} ---num of clusters {environment.check_the_clusters()} -- connected")
     else:
         num_connected_steps += 1
-        print("step %d ---num of clusters %d -- disconnected" % (step, environment.check_the_clusters()))
+        print(f"step {step} ---num of clusters {environment.check_the_clusters()} -- disconnected --max time {max_time}")
 
     storage_remain_list.append(deepcopy(swarm.remain_list))
 

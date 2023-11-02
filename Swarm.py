@@ -33,7 +33,7 @@ class Swarm:
 
         self.gco = GCO()
         self.if_once_gcn = False
-        self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, 3))
+        self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, config_dimension))
         self.max_time = 0
 
         self.ecr_gcn = ECR_GCN()
@@ -43,14 +43,14 @@ class Swarm:
         self.hero = HERO(self.initial_positions)
 
         self.if_once_gcn_network = False
-        self.once_destroy_gcn_network_speed = np.zeros((self.num_of_agents, 3))
+        self.once_destroy_gcn_network_speed = np.zeros((self.num_of_agents, config_dimension))
 
         if enable_csds:
             self.csds = CSDS(config_num_of_agents, self.initial_positions)
         self.best_final_positions = 0
 
         self.notice_destroy = False
-        self.destination_positions = np.zeros((self.num_of_agents, 3))
+        self.destination_positions = np.zeros((self.num_of_agents, config_dimension))
         self.inertia_counter = 0
         self.inertia = 100
         self.if_finish = [True for i in range(self.num_of_agents)]
@@ -82,17 +82,17 @@ class Swarm:
             self.algorithm_mode = algorithm_mode
 
         self.if_once_gcn = False
-        self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, 3))
+        self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, config_dimension))
 
         self.if_once_gcn_network = False
-        self.once_destroy_gcn_network_speed = np.zeros((self.num_of_agents, 3))
+        self.once_destroy_gcn_network_speed = np.zeros((self.num_of_agents, config_dimension))
 
     def take_actions(self):
         """
         take actions with global information (GI)
         :return: unit speed vectors
         """
-        actions = np.zeros((self.num_of_agents, 3))
+        actions = np.zeros((self.num_of_agents, config_dimension))
         max_time = 0
         self.make_remain_positions()
         flag, num_cluster = Utils.check_if_a_connected_graph(deepcopy(self.remain_positions), len(self.remain_list))

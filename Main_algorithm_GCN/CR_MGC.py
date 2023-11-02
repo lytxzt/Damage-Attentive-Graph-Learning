@@ -14,12 +14,13 @@ best_hidden_dimension = 500
 best_dropout = 0.1
 lr = 0.00001
 
+dimension = config_dimension
 
 class CR_MGC:
     def __init__(self, use_meta=False):
         self.hidden_dimension = best_hidden_dimension
         self.dropout_value = best_dropout
-        self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
+        self.gcn_network = GCN_fixed_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension,
                                                dropout=self.dropout_value, if_dropout=True, bias=True)
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
@@ -30,7 +31,7 @@ class CR_MGC:
         self.if_meta = use_meta
 
     def load_meta_params(self, remain_num):
-        self.gcn_network = GCN_fixed_structure(nfeat=3, nhid=self.hidden_dimension, nclass=3,
+        self.gcn_network = GCN_fixed_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension,
                                                dropout=self.dropout_value, if_dropout=True, bias=True)
         if self.if_meta:
             meta_param = np.load('Meta_Learning_Results/meta_parameters/meta_%d.npy' % remain_num, allow_pickle=True)
@@ -87,7 +88,10 @@ class CR_MGC:
                 break
             final_positions = self.gcn_network(remain_positions, A_hat)
 
-            final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
+            if dimension == 3:
+                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(self.FloatTensor) * final_positions
+            else:
+                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length])).type(self.FloatTensor) * final_positions
 
             # check if connected
             final_positions_ = final_positions.cpu().data.numpy()
@@ -118,7 +122,7 @@ class CR_MGC:
                 counter_loss += 1
             print("    episode %d, loss %f" % (train_step, loss_), end='\r')
             # print("---------------------------------------")
-        speed = np.zeros((config_num_of_agents, 3))
+        speed = np.zeros((config_num_of_agents, dimension))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
         # print("=======================================")
