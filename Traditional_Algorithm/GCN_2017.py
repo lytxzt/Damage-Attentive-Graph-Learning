@@ -9,7 +9,6 @@ from torch.nn.modules.module import Module
 import torch.nn as nn
 import torch.nn.functional as F
 import time
-from Main_algorithm_GCN.Smallest_d_algorithm import smallest_d_algorithm
 
 best_hidden_dimension = 500
 best_dropout = 0.1

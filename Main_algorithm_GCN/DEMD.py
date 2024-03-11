@@ -2,7 +2,6 @@ from copy import deepcopy
 from torch.optim import Adam
 import Utils
 from Configurations import *
-from Main_algorithm_GCN.Smallest_d_algorithm import smallest_d_algorithm
 import math
 import torch
 from torch.nn.parameter import Parameter
