@@ -80,12 +80,9 @@ class CR_MGC:
             # print(train_step)
             if loss_ > 1000 and train_step > 10:
                 self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
-            # if loss_ < 600:
-            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.0000005)
-            # if loss_ < 1000:
-            #     self.optimizer = Adam(self.gcn_network.parameters(), lr=0.00001)
             if counter_loss > 4 and train_step > 10:
                 break
+            
             final_positions = self.gcn_network(remain_positions, A_hat)
 
             if dimension == 3:

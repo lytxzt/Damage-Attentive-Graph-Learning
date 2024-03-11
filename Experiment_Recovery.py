@@ -3,23 +3,18 @@ from Swarm import Swarm
 from Configurations import *
 import Utils
 import matplotlib.animation as animation
-from Drawing.Draw_Static import *
+from copy import deepcopy
 from Main_algorithm_GCN.GCO import GCO
+import matplotlib.pyplot as plt
 
 # determine if draw the video
 """
 Note: if true, it may take a little long time
 """
-config_draw_video = False
+config_draw_video = True
+show_degree = True
 
 # determine if use meta learning param
-"""
-Note: if use trained meta param, you need to down the trained meta parameters from 
-       https://cloud.tsinghua.edu.cn/f/2cb28934bd9f4bf1bdd7/ or 
-       https://drive.google.com/file/d/1QPipenDZi_JctNH3oyHwUXsO7QwNnLOz/view?usp=sharing
-       the size of meta parameter file is pretty large (about 1.2GB)
-       otherwise, you could run the Meta-learning_all.py file to train the meta parameter on your own machine
-"""
 meta_param_use = False
 
 """
@@ -28,9 +23,11 @@ meta_param_use = False
                     2 for CEN
                     3 for SIDR
                     4 for GCN-2017
-                    5 for CR-MGC (proposed algorithm)
+                    5 for CR-MGC
+                    6 for DEMD (proposed algorithm)
+                    7 for DD-GCN (imcomplete)
 """
-# set this value to 5 to run the proposed algorithm
+# set this value to 6 to run the proposed algorithm
 config_algorithm_mode = 6
 algorithm_mode = {0: "CSDS",
                   1: "HERO",
@@ -38,7 +35,8 @@ algorithm_mode = {0: "CSDS",
                   3: "SIDR",
                   4: "GCN_2017",
                   5: "CR-MGC",
-                  6: "ECR-GCN"}
+                  6: "DEMD",
+                  7: "DD-GCN"}
 
 print("SCC problem Starts...")
 print("------------------------------")
@@ -65,9 +63,11 @@ storage_remain_connectivity_matrix = []
 config_num_destructed_UAVs = 100  # should be in the range of [1, config_num_-2]
 
 # change the seed to alternate the UED
-seed = 42
+seed = 39
 np.random.seed(17)
 random.seed(18)
+# np.random.seed(seed)
+# random.seed(seed)
 
 # destruction
 storage_remain_list.append(deepcopy(swarm.remain_list))
@@ -81,7 +81,7 @@ storage_remain_connectivity_matrix.append(
 break_CCN_flag = True
 # num of connected steps
 num_connected_steps = 0
-for step in range(200):
+for step in range(150):
     # destroy at time step 0
     if step == 0:
         print("=======================================")
@@ -182,6 +182,7 @@ if break_CCN_flag:
         final_positions.append(deepcopy(storage_positions[-1][i]))
     final_positions = np.array(final_positions)
     # draw_once_two_nodes(config_num_of_agents - config_num_destructed_UAVs, initial_remain_positions, final_positions)
+    # print(final_positions)
 
 
     def update(frame):
@@ -272,3 +273,29 @@ if break_CCN_flag:
     #     Utils.store_dataframe_to_excel(connection_steps_list_,
     #                                    "Experiment_Fig/Experiment_6/CR_GCM_N_num_of_cluster_once_destroy_100.xlsx",
     #                                    sheetname="CR_GCM_N")
+        
+    if show_degree:
+        A = Utils.make_A_matrix(final_positions, len(final_positions), config_communication_range)
+        degrees = [int(d) for d in np.sum(A, axis=0)]
+        # print(degrees)
+
+        # degrees = [15, 2, 2, 3, 3, 11, 2, 3, 4, 4, 14, 6, 14, 4, 9, 4, 11, 3, 14, 9, 11, 2, 4, 4, 5, 10, 5, 2, 4, 4, 6, 4, 1, 3, 2, 9, 15, 2, 4, 8, 2, 15, 3, 1, 2, 3, 2, 1, 10, 3, 9, 4, 4, 15, 5, 4, 14, 9, 4, 5, 6, 4, 2, 4, 4, 9, 3, 6, 16, 3, 15, 3, 4, 4, 13, 10, 6, 2, 9, 15, 4, 14, 6, 11, 3, 2, 9, 9, 10, 12, 13, 5, 5, 11, 5, 1, 15, 15, 11, 2]
+        # degrees = list(np.array(degrees))
+
+        # degree_range = [i+1 for i in range(max(degrees))]
+        # # print(degree_range)
+        # degree_distribution = np.zeros(len(degree_range))
+        # for i in degrees:
+        #     degree_distribution[i-1] += 1
+        # degree_distribution = list(degree_distribution/100)
+
+
+        degree_sequence = sorted(degrees, reverse=True)
+
+        plt.figure(figsize=(8, 6))
+        plt.hist(degree_sequence, bins=max(degrees), range=[0.5,max(degrees)+0.5], rwidth=0.6)
+        # plt.plot(degree_range, degree_distribution)
+        plt.title("Degree Distribution")
+        plt.xlabel("Degree")
+        plt.ylabel("Node Num")
+        plt.show()

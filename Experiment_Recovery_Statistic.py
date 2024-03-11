@@ -3,7 +3,7 @@ from Swarm import Swarm
 from Configurations import *
 import Utils
 import matplotlib.animation as animation
-from Drawing.Draw_Static import *
+from copy import deepcopy
 from Main_algorithm_GCN.GCO import GCO
 
 # determine if draw the video
@@ -11,15 +11,10 @@ from Main_algorithm_GCN.GCO import GCO
 Note: if true, it may take a little long time
 """
 config_draw_video = False
+show_distribution = True
+max_step = 700
 
 # determine if use meta learning param
-"""
-Note: if use trained meta param, you need to down the trained meta parameters from 
-       https://cloud.tsinghua.edu.cn/f/2cb28934bd9f4bf1bdd7/ or 
-       https://drive.google.com/file/d/1QPipenDZi_JctNH3oyHwUXsO7QwNnLOz/view?usp=sharing
-       the size of meta parameter file is pretty large (about 1.2GB)
-       otherwise, you could run the Meta-learning_all.py file to train the meta parameter on your own machine
-"""
 meta_param_use = False
 
 """
@@ -28,9 +23,11 @@ meta_param_use = False
                     2 for CEN
                     3 for SIDR
                     4 for GCN-2017
-                    5 for CR-MGC (proposed algorithm)
+                    5 for CR-MGC
+                    6 for DEMD (proposed algorithm)
+                    7 for DD-GCN (imcomplete)
 """
-# set this value to 5 to run the proposed algorithm
+# set this value to 6 to run the proposed algorithm
 config_algorithm_mode = 6
 algorithm_mode = {0: "CSDS",
                   1: "HERO",
@@ -38,7 +35,8 @@ algorithm_mode = {0: "CSDS",
                   3: "SIDR",
                   4: "GCN_2017",
                   5: "CR-MGC",
-                  6: "ECR-GCN"}
+                  6: "DEMD",
+                  7: "DD-GCN"}
 
 print("SCC problem Starts...")
 print("------------------------------")
@@ -52,7 +50,7 @@ storage_connection_states = []
 storage_remain_connectivity_matrix = []
 
 # change the number of destructed UAVs
-config_num_destructed_UAVs = 100  # should be in the range of [1, config_num_-2]
+config_num_destructed_UAVs = 100                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              # should be in the range of [1, config_num_-2]
 
 # change the seed to alternate the UED
 seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20, 39, 19, 89, 75, 79, 55, 61, 74, 8, 89, 83, 3, 38, 88, 56, 68, 67, 46, 48, 63, 54, 43, 52, 72, 75, 21, 64, 44, 50, 77, 39, 14, 18, 66, 82, 51, 65, 90, 57, 35, 92, 74, 9, 64, 52, 91, 56, 87, 77, 82, 34, 38, 38, 97, 3, 85, 67, 15, 86, 21, 67, 68, 98, 99, 32, 100, 48, 19, 85, 67, 81, 25, 64, 23, 37, 87, 31, 8, 96, 47, 63, 57, 1, 66, 18, 89, 54, 60, 58, 25]
@@ -63,13 +61,16 @@ seed = [61, 29, 83, 3, 59, 22, 8, 96, 80, 20, 39, 19, 89, 75, 79, 55, 61, 74, 8,
 storage_random_seed = []
 storage_connect_step = []
 storage_connect_positons = []
+storage_node_degree = []
 
-for case in range(50):
+case = 0
+# for case in range(60):
+while len(storage_random_seed) < 50 and case < len(seed):
     environment = Environment()
     if algorithm_mode == 0:
         swarm = Swarm(algorithm_mode=config_algorithm_mode, enable_csds=True, meta_param_use=meta_param_use)
     else:
-        swarm = Swarm(algorithm_mode=config_algorithm_mode, enable_csds=False, meta_param_use=meta_param_use)
+        swarm = Swarm(algorithm_mode=config_algorithm_mode, enable_csds=False, meta_param_use=meta_param_use, khop=8)
     num_cluster_list = []
 
     environment_positions = environment.reset()
@@ -111,11 +112,12 @@ for case in range(50):
     # check if the UED break the CCN of the USNET
     if num_cluster == 1:
         print("case %d: not distructed" % (case))
+        case += 1
         continue
 
     positions_with_clusters = Utils.split_the_positions_into_clusters(initial_remain_positions, num_cluster, A)
 
-    for step in range(450):
+    for step in range(max_step):
         actions, max_time = swarm.take_actions()
         environment_next_positions = environment.next_state(deepcopy(actions))
         swarm.update_true_positions(environment_next_positions)
@@ -128,7 +130,7 @@ for case in range(50):
         else:
             num_connected_steps += 1
             print("case %d: step %d ---num of clusters %d -- unconnected" % (case, step, environment.check_the_clusters()), end='\r')
-            if step == 449:
+            if step == max_step-1:
                 print("case %d: step %d ---num of clusters %d -- unconnected" % (case, step, environment.check_the_clusters()))
 
         storage_remain_list.append(deepcopy(swarm.remain_list))
@@ -165,7 +167,33 @@ for case in range(50):
     storage_connect_step.append(step)
     storage_connect_positons.append(final_positions)
 
-print(storage_random_seed)
-print(storage_connect_positons)
-print(storage_connect_step)
+    final_positions = np.array(final_positions)
+    A = Utils.make_A_matrix(final_positions, len(final_positions), config_communication_range)
+    degrees = [int(d) for d in np.sum(A, axis=0)]
+
+    storage_node_degree.extend(deepcopy(degrees))
+
+    case += 1
+
+with open(f'./Logs/{algorithm_mode[config_algorithm_mode]}_d{config_num_destructed_UAVs}.txt', 'w') as f:
+    print('case:\n', storage_random_seed, file=f)
+    print('\nconnect_step:\n', storage_connect_step, file=f)
+    print('\navg_connect_step:\n', np.mean(np.array(storage_connect_step)), file=f)
+    print('\ndegree_distribution:\n', storage_node_degree, file=f)
+    for i in range(len(storage_random_seed)):
+        print('\n=======================================', file=f)
+        print(f'case {storage_random_seed[i]} -- step {storage_connect_step[i]} -- connected', file=f)
+        print('final positions:\n', storage_connect_positons[i], file=f)
+
+# if show_distribution:
+#     degree_sequence = sorted(storage_node_degree, reverse=True)
+#     max_degree = 200 - config_num_destructed_UAVs - 1
+#     plt.figure(figsize=(8, 6))
+#     plt.hist(degree_sequence, bins=max_degree, range=[0.5,max_degree+0.5], rwidth=0.6)
+#     # plt.plot(degree_range, degree_distribution)
+#     plt.ylim(0, 350)
+#     plt.title("Degree Distribution")
+#     plt.xlabel("Degree")
+#     plt.ylabel("Node Num")
+#     plt.show()
         

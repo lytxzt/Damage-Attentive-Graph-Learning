@@ -42,7 +42,7 @@ config_best_eta = 0.3
 config_best_epsilon = 0.99
 
 # configurations on one-off UEDs
-config_num_destructed_UAVs = 100  # should be in the range of [1, num_of_UAVs-2]
+config_num_destructed_UAVs = 50  # should be in the range of [1, num_of_UAVs-2]
 config_normalize_positions = True
 
 # configurations on training GCN

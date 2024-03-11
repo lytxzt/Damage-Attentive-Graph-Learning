@@ -31,10 +31,7 @@ def check_number_of_clusters(L, num_of_agents):
     for i in range(num_of_agents):
         if e_vals[i] < 0.000001:
             eig_0_counter += 1
-    if eig_0_counter == 1:
-        return True, 1
-    else:
-        return False, eig_0_counter
+    return eig_0_counter == 1, eig_0_counter
 
 
 def normalized_single_vector(speed):
