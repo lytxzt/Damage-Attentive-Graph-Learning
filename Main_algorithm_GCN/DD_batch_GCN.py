@@ -10,25 +10,33 @@ import torch.nn as nn
 import torch.nn.functional as F
 # from multiprocessing import Pool
 import matplotlib.pyplot as plt
-from Main_algorithm_GCN.GATlayers import GraphAttentionLayer
 
 best_hidden_dimension = 512
 best_dropout = 0.1
 # lr = 0.00001
 alpha = 0.12
 draw = False
+batch_size = 8
+embedding_distence = 450
+
+'''
+mode 1: tahn    + L1
+mode 2: no tahn + L1
+mode 3: tahn    + no L1
+mode 4: no tahn + no L1
+'''
 
 dimension = config_dimension
+central_point = np.array([500, 500]) if dimension == 2 else np.array([500, 500, 50])
 
 class DD_GCN:
     def __init__(self):
         self.hidden_dimension = best_hidden_dimension
         self.dropout_value = best_dropout
 
-    def dd_gcn(self, global_positions, remain_list, khop=3):
+    def dd_batch(self, global_positions, remain_list):
         # self.gcn_network = GCN_fixed_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension, dropout=self.dropout_value, if_dropout=True, bias=True)
         gcn_network = GCN_dd_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension, dropout=self.dropout_value, if_dropout=True, bias=True)
-        # gcn_network = GAT_dd_structure(nfeat=dimension, nhid=self.hidden_dimension, nclass=dimension, dropout=self.dropout_value, alpha=alpha, nheads=8)
         use_cuda = torch.cuda.is_available()
         if use_cuda:
             gcn_network.cuda()
@@ -36,7 +44,7 @@ class DD_GCN:
         # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
         FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
-        optimizer = Adam(gcn_network.parameters(), lr=0.001)
+        optimizer = Adam(gcn_network.parameters(), lr=0.0001)
 
         remain_positions = []
         for i in remain_list:
@@ -48,86 +56,120 @@ class DD_GCN:
         for i in range(len(global_positions)):
             if i not in remain_list:
                 fixed_positions.append(deepcopy(global_positions[i]))
-        fixed_positions.append(np.array([500, 500]))
+        fixed_positions.append(central_point)
 
         num_of_agents = len(fixed_positions)
+        num_destructed = num_of_agents - num_remain
         
         fixed_positions = np.array(fixed_positions)
         remain_positions = np.array(remain_positions)
 
         # damage differential
-        A = make_dd_khop_A_matrix(fixed_positions, num_remain, config_communication_range, khop)
-        # A = Utils.make_A_matrix(remain_positions, num_remain, config_communication_range)
+        A_hat_batch = []
+        for khop in range(2, 2+batch_size):
+            A = make_dd_khop_A_matrix(fixed_positions, num_remain, config_communication_range, khop)
+            # A = Utils.make_A_matrix(remain_positions, num_remain, config_communication_range)
 
-        D = Utils.make_D_matrix(A, num_of_agents)
-        # L = D - A
-        # A_norm = np.linalg.norm(A, ord=np.inf)
-        # k0 = 1 / A_norm
-        # K = 0.99 * k0
-        # A_hat = np.eye(num_of_agents) - K * L
-        
-        D_tilde_sqrt = np.diag(D.diagonal() ** (-0.5))
-        A_hat = np.eye(num_of_agents) - D_tilde_sqrt @ A @ D_tilde_sqrt
-        
-        A_init = deepcopy(A)
+            D = Utils.make_D_matrix(A, num_of_agents)
+            L = D - A
+            A_norm = np.linalg.norm(A, ord=np.inf)
+            # print(A_norm)
+            # A_norm = num_of_agents
+            k0 = 1 / A_norm
+            K = 0.5 * k0
+            A_hat_khop = np.eye(num_of_agents) - K * L
+
+            # D_norm = np.array([num_destructed for _ in range(num_remain)] + [num_remain for _ in range(num_destructed)])
+            # D_tilde_sqrt = np.diag(D_norm ** (-0.5))
+            # A_hat_khop = np.eye(num_of_agents) - 0.99 * D_tilde_sqrt @ L @ D_tilde_sqrt
+
+            
+            A_hat_khop = torch.FloatTensor(A_hat_khop).type(FloatTensor)
+            A_hat_batch.append(A_hat_khop)
+
+        A_hat = torch.block_diag(A_hat_batch[0])
+        for k in range(1, batch_size):
+            A_hat = torch.block_diag(A_hat, A_hat_batch[k])
 
         fixed_positions = torch.FloatTensor(fixed_positions).type(FloatTensor)
+        fixed_positions_batch = torch.tile(fixed_positions, (batch_size,1))
         remain_positions = torch.FloatTensor(remain_positions).type(FloatTensor)
-        A_hat = torch.FloatTensor(A_hat).type(FloatTensor)
+        remain_positions_batch = torch.tile(remain_positions, (batch_size,1))
 
         best_final_positions = 0
         best_loss = 1000000000000
         loss_ = 0
+
+        best_final_k = 0
+        best_final_epoch = 0
 
         # print("---------------------------------------")
         # print("start training GCN ... ")
         # print("=======================================")
         for train_step in range(1000):
             # print(train_step)
+            # if loss_ % 5000 > 1300 and train_step > 10:
+            #     optimizer = Adam(gcn_network.parameters(), lr=0.0001)
 
-            final_positions = gcn_network(fixed_positions, A_hat, num_remain)
-
-
+            final_positions_list = gcn_network(fixed_positions_batch, A_hat, num_remain)
+            
             if dimension == 3:
-                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(FloatTensor) * final_positions
+                final_positions_list = [0.5 * torch.Tensor(np.array([config_width, config_length, config_height])).type(FloatTensor) * p for p in final_positions_list]
             else:
-                final_positions = 0.5 * torch.Tensor(np.array([config_width, config_length])).type(FloatTensor) * final_positions
-            # if train_step == 0: print(final_positions)
+                final_positions_list = [0.5 * torch.Tensor(np.array([config_width, config_length])).type(FloatTensor) * p for p in final_positions_list]
 
-            # check if connected
-            final_positions_ = final_positions.cpu().data.numpy()
-            # A = Utils.make_A_matrix(final_positions_, len(final_positions_), config_communication_range)
-            # D = Utils.make_D_matrix(A, len(A))
-            # L = D - A
-            # flag, num = Utils.check_number_of_clusters(L, len(L))
-            e_vals, num = check_number_of_clusters_torch(final_positions, config_communication_range)
-            # print(num)
+            loss_list = []
+            num_list = []
+
+            loss = []
+
+            # loss_step = []
+            # loss_norm =[]
+
+            for final_positions in final_positions_list:
+                e_vals, num = check_number_of_clusters_torch(final_positions, config_communication_range)
+
+                # final_positions_ = final_positions.cpu().data.numpy()
+                # A = Utils.make_A_matrix(final_positions_, len(final_positions_), config_communication_range)
+                # D = Utils.make_D_matrix(A, len(A))
+                # L = D - A
+                # flag, num_ = Utils.check_number_of_clusters(L, len(L))
+                # print(num.cpu().data.numpy(), num_)
+                num_list.append(num)
+
+                loss_k = 5000*(num-1) + torch.max(torch.norm(final_positions-remain_positions, dim=1))# + torch.sum(torch.norm(final_positions-remain_positions, dim=1))/num_remain
+                # loss_k = 5000*(num-1) + torch.sum(torch.norm(final_positions-remain_positions, dim=1))/num_remain
+                loss_list.append(loss_k)
+                # loss_step.append(torch.max(torch.norm(final_positions-remain_positions, dim=1)))
+                loss.append(torch.sum(torch.norm(final_positions-remain_positions, dim=1))/num_remain)
+
+            best_loss_k = min(loss_list)
+            best_k = loss_list.index(best_loss_k)
+            final_positions = final_positions_list[best_k]
+            num = num_list[best_k]
+            # print(num.cpu().data.numpy())
+
+            final_positions_batch = torch.stack(final_positions_list).reshape(num_remain * batch_size, dimension)
 
             # loss
-            loss =[]
+            # loss_step = torch.stack(loss_step)
+            # weights_ones = torch.ones_like(loss_step)
+            # loss_norm = torch.stack(loss_norm)
+
+            # loss.append(loss_step @ weights_ones)
+            # loss.append(loss_norm @ weights_ones)
 
             # loss1
-            loss.append(torch.max(torch.norm(final_positions-remain_positions, dim=1)))
-            # loss.append(torch.sum(torch.norm(final_positions-remain_positions, dim=1))*10/num_remain)
+            # loss.append(torch.max(torch.norm(final_positions-remain_positions, dim=1)))
+            # loss.append(torch.sum(torch.norm(final_positions_batch-remain_positions_batch, dim=1))*10/num_remain)
             # loss.append(torch.norm(torch.norm(final_positions-remain_positions, dim=1)))
             # print(final_positions)
             # loss.append(torch.norm(e_vals))
-
-            # loss2
-            degree = torch.Tensor(np.sum(A_init, axis=0) / np.sum(A_init)).type(FloatTensor).reshape((num_of_agents,1))
-            degree = degree.split(num_remain, dim=0)[0]
-            centroid = torch.sum(torch.mul(final_positions, degree), dim=0)
-            # centroid = torch.mean(final_positions, dim=0)
-
-            # centrepoint = 0.5*torch.max(final_positions, dim=0)[0] + 0.5*torch.min(final_positions, dim=0)[0]
-            centrepoint = 0.5*torch.max(remain_positions, dim=0)[0] + 0.5*torch.min(remain_positions, dim=0)[0]
-
-            # print(centroid, centrepoint)
-            # loss.append(torch.norm(centroid - centrepoint))
             
             # print(loss)
+            # loss_list += loss
 
-            loss = torch.stack(loss)
+            loss = torch.stack(loss_list)
             # print(loss)
 
             # initialization
@@ -138,17 +180,19 @@ class DD_GCN:
                 T = loss_weights.sum().detach()
                 loss_optimizer = Adam([loss_weights], lr=0.01)
                 l0 = loss.detach()
-                # layer = gcn_network.out_att
                 layer = gcn_network.gc8
 
-
             # compute the weighted loss
-            weighted_loss = 50000*(num - 1) + loss_weights @ loss
+            # weighted_loss = 5000*(torch.sum(torch.tensor(num_list)) - batch_size) + loss_weights @ loss
+            # weighted_loss = torch.exp(loss_weights-1) @ loss
+            weighted_loss = loss_weights @ loss
             # weighted_loss = 1000 * (num - 1) + loss_weights @ loss + torch.var(degree-degree_init)
             # print(weighted_loss.cpu().data.numpy())
-            if weighted_loss.cpu().data.numpy() < best_loss:
-                best_loss = deepcopy(weighted_loss.cpu().data.numpy())
+            if best_loss_k.cpu().data.numpy() < best_loss:
+                best_loss = deepcopy(best_loss_k.cpu().data.numpy())
                 best_final_positions = deepcopy(final_positions.cpu().data.numpy())
+                best_final_k = best_k
+                best_final_epoch = train_step
 
             # clear gradients of network
             optimizer.zero_grad()
@@ -160,6 +204,7 @@ class DD_GCN:
                 dl = torch.autograd.grad(loss_weights[i]*loss[i], layer.parameters(), retain_graph=True, create_graph=True)[0]
                 gw.append(torch.norm(dl))
             gw = torch.stack(gw)
+
             # compute loss ratio per task
             loss_ratio = loss.detach() / l0
             # compute the relative inverse training rate per task
@@ -174,7 +219,7 @@ class DD_GCN:
             # backward pass for GradNorm
             gradnorm_loss.backward()
             # log loss_weights and loss
-            
+
             # update model loss_weights
             optimizer.step()
             # update loss loss_weights
@@ -185,8 +230,9 @@ class DD_GCN:
             loss_weights = torch.nn.Parameter(loss_weights)
             loss_optimizer = torch.optim.Adam([loss_weights], lr=0.01)
             
-            loss_ = weighted_loss.cpu().data.numpy()
-            print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
+            loss_ = best_loss_k.cpu().data.numpy()
+            print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_:.2f}", end='\r')
+            # print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
             # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
 
             if draw and train_step % 200 == 0:
@@ -199,6 +245,7 @@ class DD_GCN:
                 # plt.xlim(0, 1000)
                 # plt.ylim(0, 1000)
                 plt.show()
+            
 
         speed = np.zeros((config_num_of_agents, dimension))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
@@ -213,6 +260,8 @@ class DD_GCN:
 
         max_time = temp_max_distance / config_constant_speed
 
+        print(f"trained: max time {max_time}, best episode {best_final_epoch}, best k-hop {best_final_k+2}")
+
         if draw:
             remain_positions_ = remain_positions.cpu().data.numpy()
 
@@ -225,26 +274,6 @@ class DD_GCN:
         # print(max_time)
 
         return deepcopy(speed), deepcopy(max_time), deepcopy(best_final_positions)
-
-    def dd_adaptive(self, global_positions, remain_list):
-        best_speed, best_max_time, best_positions = [], 100000, []
-        best_k = 1
-
-        for k in range(4, 7):
-            speed, max_time, positions = self.dd_gcn(global_positions, remain_list, k)
-            A = Utils.make_A_matrix(positions, len(positions), config_communication_range)
-            D = Utils.make_D_matrix(A, len(A))
-            L = D - A
-            flag, num = Utils.check_number_of_clusters(L, len(L))
-            print(f'khop = {k} with num {num}, max step {max_time}')
-            if max_time < best_max_time and num == 1:
-                best_speed, best_max_time, best_positions = deepcopy(speed), deepcopy(max_time), deepcopy(positions)
-                best_k = k
-            # else:
-            #     break
-
-        print(best_k, best_max_time)
-        return deepcopy(best_speed), deepcopy(best_max_time), deepcopy(best_positions)
 
 
 class GraphConvolution(Module):
@@ -288,18 +317,17 @@ def make_dd_khop_A_matrix(positions, num_remain, d=config_communication_range, k
     for i in range(num_remain):
         for j in range(num_remain, num_of_agents-1):
             hop = 1
+            # if np.linalg.norm(positions[j] - central_point) >= embedding_distence : continue
+            # dis = np.linalg.norm(positions[j] - central_point) / embedding_distence 
+            # dis = np.cos(dis*np.pi/2)
             while(j not in all_neighbor[i][hop-1]):hop+=1
             if hop <= khop:
                 A[i, j] = 1
                 A[j, i] = 1
 
     for i in range(num_of_agents-1):
-        j = num_of_agents-1
-        hop = 1
-        while(j not in all_neighbor[i][hop-1]):hop+=1
-        if hop >= 2:
-            A[i, num_of_agents-1] = 1
-            A[num_of_agents-1, i] = 1
+        A[i, num_of_agents-1] = 1
+        A[num_of_agents-1, i] = 1
 
     # print(A)
     return deepcopy(A)
@@ -339,31 +367,6 @@ def calculate_khop_neighbour(positions, d):
     return deepcopy(all_neighbour)
 
 
-def check_number_of_clusters_torch(positions, d):
-    m, n = positions.shape
-    G = torch.mm(positions, positions.T)
-    H = torch.tile(torch.diag(G), (m, 1))
-    D = torch.sqrt(H + H.T - 2*G)
-    # print(m, n, D)
-    A = torch.where(D > d, 0, 1.0)
-    # A = torch.where(A > 0, 1, A)
-    # print(m, n, A)
-    D = torch.diag(torch.sum(A, dim=1))
-    # print(m, n, D)
-    L = D - A
-
-    try:
-        e_vals, e_vecs = torch.linalg.eigh(L)
-    except:
-        e_vals, e_vecs = np.linalg.eig(L.cpu().data.numpy())
-        e_vals = torch.FloatTensor(e_vals.real).type(torch.cuda.FloatTensor)
-    # print(e_vals)
-        
-    num = torch.sum(torch.where(e_vals.real < 0.0001, 1, 0))
-    # print(num)
-    return e_vals.real, num
-
-
 class GCN_dd_structure(nn.Module):
     def __init__(self, nfeat=3, nhid=5, nclass=3, dropout=0.5, if_dropout=True, bias=True):
         super(GCN_dd_structure, self).__init__()
@@ -391,29 +394,32 @@ class GCN_dd_structure(nn.Module):
         x = F.relu(self.gc6(x, adj))
         x = F.relu(self.gc7(x, adj))
         x = self.gc8(x, adj)
-        x = x.split(num_remain, dim=0)[0]
+        x = x.split(config_num_of_agents+1, dim=0)
+        x = [torch.tanh(x_remain.split(num_remain, dim=0)[0])+1 for x_remain in x]
+        # x = [x_remain.split(num_remain, dim=0)[0] for x_remain in x]
 
-        return torch.tanh(x) + 1
-        # return x
-
-
-class GAT_dd_structure(nn.Module):
-    def __init__(self, nfeat=3, nhid=5, nclass=3, dropout=0.5, alpha=0.2, nheads=8):
-        """Dense version of GAT."""
-        super(GAT_dd_structure, self).__init__()
-        self.dropout = dropout
-
-        self.attentions = [GraphAttentionLayer(nfeat, nhid, dropout=dropout, alpha=alpha, concat=True) for _ in range(nheads)]
-        for i, attention in enumerate(self.attentions):
-            self.add_module('attention_{}'.format(i), attention)
-
-        self.out_att = GraphAttentionLayer(nhid * nheads, nclass, dropout=dropout, alpha=alpha, concat=False)
-
-    def forward(self, x, adj, num_remain):
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = torch.cat([att(x, adj) for att in self.attentions], dim=1)
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = F.elu(self.out_att(x, adj))
-        
-        x = x.split(num_remain, dim=0)[0]
+        # return torch.tanh(x) + 1
         return x
+    
+def check_number_of_clusters_torch(positions, d):
+    m, n = positions.shape
+    G = torch.mm(positions, positions.T)
+    H = torch.tile(torch.diag(G), (m, 1))
+    D = torch.sqrt(H + H.T - 2*G)
+    # print(m, n, D)
+    A = torch.where(D > d, 0, 1.0)
+    # print(m, n, A)
+    D = torch.diag(torch.sum(A, dim=1))
+    # print(m, n, D)
+    L = D - A
+
+    try:
+        e_vals, e_vecs = torch.linalg.eigh(L)
+    except:
+        e_vals, e_vecs = np.linalg.eig(L.cpu().data.numpy())
+        e_vals = torch.FloatTensor(e_vals.real).type(torch.cuda.FloatTensor)
+    # print(e_vals.real)
+        
+    num = torch.sum(torch.where(e_vals.real < 0.0001, 1, 0))
+    # print(torch.sum(e_vals), torch.trace(L), torch.sum(A))
+    return e_vals.real, num

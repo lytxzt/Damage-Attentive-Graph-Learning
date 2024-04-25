@@ -1,5 +1,4 @@
 from copy import deepcopy
-from torch.optim import Adam
 import Utils
 from Configurations import *
 import math
@@ -14,10 +13,8 @@ import matplotlib.pyplot as plt
 best_hidden_dimension = 512
 best_dropout = 0.1
 # lr = 0.00001
-use_gradnorm = True
 alpha = 0.12
 draw = False
-# khop = 5
 
 dimension = config_dimension
 
@@ -35,7 +32,7 @@ class DEMD:
         # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
         FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
-        optimizer = Adam(gcn_network.parameters(), lr=0.0001)
+        optimizer = torch.optim.Adam(gcn_network.parameters(), lr=0.0001)
 
         remain_positions = []
         for i in remain_list:
@@ -81,18 +78,12 @@ class DEMD:
         best_loss = 1000000000000
         loss_ = 0
         counter_loss = 0
-
         
         # print("---------------------------------------")
         # print("start training GCN ... ")
         # print("=======================================")
         for train_step in range(1000):
-            # print(train_step)
-            if loss_ > 1000 and train_step > 50:
-                optimizer = Adam(gcn_network.parameters(), lr=0.0001)
-            if counter_loss > 4 and train_step > 50:
-                break
-
+            
             # final_positions = self.gcn_network(remain_positions, A_hat)
             final_positions = gcn_network(fixed_positions, A_hat, A_fixed, num_remain)
 
@@ -104,16 +95,20 @@ class DEMD:
 
             # check if connected
             final_positions_ = final_positions.cpu().data.numpy()
-            A = Utils.make_A_matrix(final_positions_, len(final_positions_), config_communication_range)
-            D = Utils.make_D_matrix(A, len(A))
-            L = D - A
-            flag, num = Utils.check_number_of_clusters(L, len(L))
+            # A = Utils.make_A_matrix(final_positions_, len(final_positions_), config_communication_range)
+            # D = Utils.make_D_matrix(A, len(A))
+            # L = D - A
+            # flag, num_ = Utils.check_number_of_clusters(L, len(L))
+            num = check_number_of_clusters_torch(final_positions, config_communication_range)
+            # print(num_, num)
 
             # loss
             loss =[]
 
             # loss1
             loss.append(torch.max(torch.norm(final_positions-remain_positions, dim=1)))
+            loss.append(torch.sum(torch.norm(final_positions-remain_positions, dim=1))*10/num_remain)
+            # loss.append(torch.norm(torch.norm(final_positions-remain_positions, dim=1)))
             # print(final_positions)
 
             # loss2
@@ -121,7 +116,7 @@ class DEMD:
             centroid = torch.sum(torch.mul(final_positions,degree), dim=0)
             centrepoint = 0.5*torch.max(remain_positions, dim=0)[0] + 0.5*torch.min(remain_positions, dim=0)[0]
             # print(centroid, centrepoint)
-            loss.append(torch.norm(centroid - centrepoint))
+            # loss.append(torch.norm(centroid - centrepoint))
 
             # loss 3
             directions = final_positions - remain_positions
@@ -139,12 +134,12 @@ class DEMD:
                 # loss_weights = torch.tensor((1,1,10)).cuda()
                 loss_weights = torch.nn.Parameter(loss_weights)
                 T = loss_weights.sum().detach()
-                loss_optimizer = Adam([loss_weights], lr=0.01)
+                loss_optimizer = torch.optim.Adam([loss_weights], lr=0.01)
                 l0 = loss.detach()
                 layer = gcn_network.gc8
 
             # compute the weighted loss
-            weighted_loss = 1000*(num - 1) + loss_weights @ loss
+            weighted_loss = 1000*(num-1) + loss_weights @ loss
             # weighted_loss = 1000 * (num - 1) + loss_weights @ loss + torch.var(degree-degree_init)
             # print(weighted_loss.cpu().data.numpy())
             if weighted_loss.cpu().data.numpy() < best_loss:
@@ -174,18 +169,20 @@ class DEMD:
             loss_optimizer.zero_grad()
             # backward pass for GradNorm
             gradnorm_loss.backward()
+
             # log loss_weights and loss
             # update model loss_weights
             optimizer.step()
             # update loss loss_weights
             loss_optimizer.step()
+
             # renormalize loss_weights
             loss_weights = (loss_weights / loss_weights.sum() * T).detach()
             loss_weights = torch.nn.Parameter(loss_weights)
             loss_optimizer = torch.optim.Adam([loss_weights], lr=0.01)
             
             loss_ = weighted_loss.cpu().data.numpy()
-            print(f"episode {train_step}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
+            print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
             # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
             # print("---------------------------------------")
             
@@ -194,34 +191,19 @@ class DEMD:
             else:
                 counter_loss = 0
             
-            if draw and train_step % 100 == 0:
-                centroid_ = centroid.cpu().data.numpy()
-                centrepoint_ = centrepoint.cpu().data.numpy()
-                # centroid_rv_ = centroid_rv.cpu().data.numpy()
-                remain_positions_ = remain_positions.cpu().data.numpy()
-
-                plt.scatter(final_positions_[:,0], final_positions_[:,1], c='g')
-                plt.scatter(remain_positions_[:,0], remain_positions_[:,1], c='black')
-                plt.scatter(centroid_[0], centroid_[1], c='r')
-                plt.scatter(centrepoint_[0], centrepoint_[1], c='b')
-                # plt.scatter(centroid_rv_[0], centroid_rv_[1], c='y')
-                plt.xlim(0, 1000)
-                plt.ylim(0, 1000)
-                plt.show()
 
         speed = np.zeros((config_num_of_agents, dimension))
         remain_positions_numpy = remain_positions.cpu().data.numpy()
         temp_max_distance = 0
         # print("=======================================")
 
-        # store_best_final_positions = pd.DataFrame(best_final_positions)
-        # Utils.store_dataframe_to_excel(store_best_final_positions,"Experiment_Fig/Experiment_3_compare_GI/positions_2_2.xlsx")
-
+        temp_max_distance = np.max(np.linalg.norm(best_final_positions - remain_positions_numpy, axis=1))
+        # print("max_distance", temp_max_distance)
         for i in range(num_remain):
             if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > 0:
+                # speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / temp_max_distance
                 speed[remain_list[i]] = (best_final_positions[i] - remain_positions_numpy[i]) / np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i])
-            if np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]) > temp_max_distance:
-                temp_max_distance = deepcopy(np.linalg.norm(best_final_positions[i] - remain_positions_numpy[i]))
+
 
         max_time = temp_max_distance / config_constant_speed
 
@@ -241,7 +223,7 @@ class DEMD:
     def demd_adaptive(self, global_positions, remain_list):
         best_speed, best_max_time, best_positions = [], 100000, []
 
-        for k in range(4, 9):
+        for k in range(2, 9):
             speed, max_time, positions = self.demd(global_positions, remain_list, k)
             print(f'khop = {k} with max step {max_time}')
             if max_time < best_max_time:
@@ -323,12 +305,9 @@ def calculate_global_neighbour(global_positions, d):
         cnt = 0
         neighbour_i_all = []
         neighbour_i_multihop = deepcopy(neighbour_i_1hop[i])
-        # neighbour_i_all.append(deepcopy(neighbour_i_1hop[i]))
 
         # while len(sum(neighbour_i_all, [])) < 199:
         while len(neighbour_i_multihop) > 0:
-            # print(len(sum(neighbour_i_all, [])))
-            # print(neighbour_i_all)
             neighbour_i_all.append(deepcopy(neighbour_i_multihop))
             neighbour_i_multihop = []
 
@@ -409,3 +388,26 @@ class GCN_diffussion_structure(nn.Module):
 
         # return torch.tanh(x) + 1
         return x
+
+def check_number_of_clusters_torch(positions, d):
+    m, n = positions.shape
+    G = torch.mm(positions, positions.T)
+    H = torch.tile(torch.diag(G), (m, 1))
+    D = torch.sqrt(H + H.T - 2*G)
+    # print(m, n, D)
+    A = torch.where(D > d, 0, 1.0)
+    # A = torch.where(A > 0, 1, A)
+    # print(m, n, A)
+    D = torch.diag(torch.sum(A, dim=1))
+    # print(m, n, D)
+    L = D - A
+
+    try:
+        e_vals, e_vecs = torch.linalg.eigh(L)
+    except:
+        e_vals, e_vecs = np.linalg.eig(L.cpu().data.numpy())
+        e_vals = torch.FloatTensor(e_vals.real).type(torch.cuda.FloatTensor)
+    # print(e_vals)
+    num = torch.sum(torch.where(e_vals < 0.0001, 1, 0))
+    # print(num)
+    return num

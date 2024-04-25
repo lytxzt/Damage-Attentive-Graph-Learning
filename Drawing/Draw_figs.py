@@ -52,9 +52,9 @@ def draw_method_figs():
     num_destroyed = [25, 50, 75, 100, 125, 150, 175]
 
     step_methods = []
-    marklist = ['o', '^', 's', 'd', 'h', 'v']
-    methods = ["DEMD", "CR-MGC", "CEN", "HERO", "SIDR", "GCN_2017"]
-    method_labels = ["DEMD", "CR-MGC", "centering", "HERO", "SIDR", "GCN"]
+    marklist = ['o', '^', 's', 'd', 'h', 'v', 'o', 'd']
+    methods = ["DD-GCN_batch", "DEMD", "CR-MGC", "CEN", "HERO", "SIDR", "GCN_2017", "CEN_scaled"]
+    method_labels = ["DD-GCN", "DEMD", "CR-MGC", "centering", "HERO", "SIDR", "GCN", "scaled-center"]
 
     for m in methods:
         step_m = []
@@ -107,12 +107,13 @@ def draw_spatial_coverage():
 
     # coverage_methods = [[0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5472358273237179, 0.5137605794270833, 0.42624472656250006, 0.3349951171875001, 0.23151835937499998, 0.1789016927083333, 0.10261953124999998]]
     # scaled
-    coverage_methods = [[0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5873599008413461, 0.5707125, 0.5360072916666666, 0.4860467447916667, 0.39812076822916664, 0.2877386067708333, 0.17947519531249997]]
+    # coverage_methods = [[0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5873599008413461, 0.5707125, 0.5360072916666666, 0.4860467447916667, 0.39812076822916664, 0.2877386067708333, 0.17947519531249997]]
+    coverage_methods = [[0.5968694911858974, 0.5925361328125, 0.5809194010416667, 0.5435434895833333, 0.45511796875, 0.3193609375, 0.1830646484375], [0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5472358273237179, 0.5137605794270833, 0.42624472656250006, 0.34188515625, 0.23151835937499998, 0.17538046875, 0.10261953124999998], [0.5873599008413461, 0.5707125, 0.5360072916666666, 0.4860467447916667, 0.39812076822916664, 0.2877386067708333, 0.17947519531249997]]
 
     # coverage_methods = []
-    marklist = ['o', '^', 's', 'd']
-    methods = ["DEMD", "CR-MGC", "CEN"]
-    method_labels = ["DEMD", "CR-MGC", "centering"]
+    marklist = ['o', '^', 's', 'd', 'v']
+    methods = ["DD-GCN_batch", "DEMD", "CR-MGC", "CEN", "CEN_scaled"]
+    method_labels = ["DD-GCN", "DEMD", "CR-MGC", "centering", "scaled-center"]
 
     # for m in methods:
     #     coverage_m = []
@@ -162,7 +163,7 @@ def draw_spatial_coverage():
         plt.plot(num_destroyed, s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i])
 
     plt.xlim(10,200)
-    plt.ylim(0.1,0.6)
+    plt.ylim(0.08,0.62)
     plt.grid(linestyle='--')
     plt.xlabel('Number of destroyed UAVs', fontdict={'family':'serif', 'size':14})
     plt.ylabel('Average spatial coverage ratio', fontdict={'family':'serif', 'size':14})
@@ -178,11 +179,11 @@ def draw_spatial_coverage():
 
 
 def draw_degree_distribution():
-    num_destroyed = [100, 150]
+    num_destroyed = [150]
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
 
-    methods = ["DEMD", "CR-MGC", "CEN", "GCN_2017"]
-    method_labels = ["DEMD", "CR-MGC", "centering", "GCN"]
+    methods = ["DD-GCN_L1", "DEMD", "CR-MGC", "CEN", "DF-scaled", "GCN_2017"]
+    method_labels = ["DD-GCN", "DEMD", "CR-MGC", "centering", "scaled-center", "GCN"]
 
     for dnum in num_destroyed:
         drange = range(200-dnum)
@@ -209,7 +210,7 @@ def draw_degree_distribution():
         plt.xlabel(f'Node degree $d$ with $N_D={dnum}$', fontdict={'family':'serif', 'size':14})
         plt.ylabel(f'Cumulative Degree Distribution $P_d$', fontdict={'family':'serif', 'size':14})
         plt.ylim(0, 1.03)
-        plt.legend(loc='upper left')
+        plt.legend(loc='lower right')
         plt.show()
         # plt.savefig(f'./Figs/distribution/fig_d{dnum}.png')
         # print(step_m)
@@ -234,7 +235,7 @@ def draw_degree_distribution():
 
 
 if __name__ == "__main__":
-    draw_method_figs()
+    # draw_method_figs()
     # draw_khop_figs()
-    draw_spatial_coverage()
+    # draw_spatial_coverage()
     draw_degree_distribution()

@@ -5,12 +5,15 @@ from Environment import Environment
 from Main_algorithm_GCN.GCO import GCO
 from Main_algorithm_GCN.CR_MGC import CR_MGC
 from Main_algorithm_GCN.DEMD import DEMD
-from Main_algorithm_GCN.DD_GCN import DD_GCN
+# from Main_algorithm_GCN.DD_GCN import DD_GCN
+from Main_algorithm_GCN.DD_batch_GCN import DD_GCN
 from Traditional_Algorithm.GCN_2017 import GCN_2017
 from Traditional_Algorithm.Centering import centering_fly, centering_scaled
 from Traditional_Algorithm.SIDR import SIDR
 from Traditional_Algorithm.CSDS import CSDS
 from Traditional_Algorithm.HERO import HERO
+from Traditional_Algorithm.DF_scaled import df_scaled
+
 import torch
 
 
@@ -122,9 +125,9 @@ class Swarm:
 
             elif self.algorithm_mode == 2:
                 # centering
-                for i in self.remain_list:
-                    actions[i] = centering_fly(self.true_positions, self.remain_list, i)
-                # actions = centering_scaled(self.true_positions, self.remain_list)
+                # for i in self.remain_list:
+                #     actions[i] = centering_fly(self.true_positions, self.remain_list, i)
+                actions = centering_scaled(self.true_positions, self.remain_list, config_dimension)
 
             elif self.algorithm_mode == 3:
                 # SIDR
@@ -193,20 +196,37 @@ class Swarm:
                 # damage differential
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
-                        if np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
+                        d = np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i])
+                        if d >= 1:
                             actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
+                        elif d > 0.1:
+                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]]) * d
 
                         # else:
                         #     print("%d already finish" % self.remain_list[i])
                     max_time = deepcopy(self.max_time)
                 else:
                     self.if_once_gcn_network = True
-                    actions, max_time, best_final_positions = self.dd_gcn.dd_gcn(deepcopy(self.true_positions),
-                                                                                 deepcopy(self.remain_list))
+                    # actions, max_time, best_final_positions = self.dd_gcn.dd_gcn(deepcopy(self.true_positions),
+                    #                                                              deepcopy(self.remain_list))
+                    # actions, max_time, best_final_positions = self.dd_gcn.dd_adaptive(deepcopy(self.true_positions),
+                    #                                                                       deepcopy(self.remain_list))
+                    actions, max_time, best_final_positions = self.dd_gcn.dd_batch(deepcopy(self.true_positions),
+                                                                                          deepcopy(self.remain_list))
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
             
+            elif self.algorithm_mode == 8:
+                # differential feilds
+                if self.if_once_gcn_network:
+                    for i in range(len(self.remain_list)):
+                        actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
+                else:
+                    self.if_once_gcn_network = True
+                    actions = df_scaled(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range)
+                    self.once_destroy_gcn_network_speed = deepcopy(actions)
+
             else:
                 print("No such algorithm")
         return deepcopy(actions), deepcopy(max_time)

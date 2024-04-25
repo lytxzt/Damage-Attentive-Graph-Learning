@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 """
 Note: if true, it may take a little long time
 """
-config_draw_video = True
-show_degree = True
+config_draw_video = False
+show_degree = False
 
 # determine if use meta learning param
 meta_param_use = False
@@ -24,11 +24,12 @@ meta_param_use = False
                     3 for SIDR
                     4 for GCN-2017
                     5 for CR-MGC
-                    6 for DEMD (proposed algorithm)
-                    7 for DD-GCN (imcomplete)
+                    6 for DEMD
+                    7 for DD-GCN (best algorithm)
+                    8 for DF-scaled (non GCN)
 """
-# set this value to 6 to run the proposed algorithm
-config_algorithm_mode = 6
+# set this value to 7 to run the proposed algorithm
+config_algorithm_mode = 7
 algorithm_mode = {0: "CSDS",
                   1: "HERO",
                   2: "CEN",
@@ -36,7 +37,8 @@ algorithm_mode = {0: "CSDS",
                   4: "GCN_2017",
                   5: "CR-MGC",
                   6: "DEMD",
-                  7: "DD-GCN"}
+                  7: "DD-GCN",
+                  8: "DF-scaled"}
 
 print("SCC problem Starts...")
 print("------------------------------")
@@ -63,7 +65,7 @@ storage_remain_connectivity_matrix = []
 config_num_destructed_UAVs = 100  # should be in the range of [1, config_num_-2]
 
 # change the seed to alternate the UED
-seed = 39
+seed = 83
 np.random.seed(17)
 random.seed(18)
 # np.random.seed(seed)
@@ -81,7 +83,9 @@ storage_remain_connectivity_matrix.append(
 break_CCN_flag = True
 # num of connected steps
 num_connected_steps = 0
-for step in range(150):
+count_connect = 0
+
+for step in range(500):
     # destroy at time step 0
     if step == 0:
         print("=======================================")
@@ -140,6 +144,9 @@ for step in range(150):
     print("---------------------------------------")
     if temp_cluster == 1:
         print(f"step {step} ---num of clusters {environment.check_the_clusters()} -- connected")
+        count_connect += 1
+        if count_connect > 15:
+            break
     else:
         num_connected_steps += 1
         print(f"step {step} ---num of clusters {environment.check_the_clusters()} -- disconnected --max time {max_time}")
@@ -255,7 +262,7 @@ if break_CCN_flag:
         fig = plt.figure()
         frame = np.linspace(0, num_connected_steps + 10, num_connected_steps + 11).astype(int)
         ani = animation.FuncAnimation(fig, update, frames=frame, interval=90, repeat_delay=10)
-        ani.save("Figs/one_off_destruct_%d.gif" % config_num_destructed_UAVs, writer='pillow', bitrate=2048, dpi=500)
+        ani.save(f"Figs/one_off_destruct_d{config_num_destructed_UAVs}_{algorithm_mode[config_algorithm_mode]}.gif", writer='pillow', bitrate=2048, dpi=500)
         plt.show()
 
     # environment.make_remain_positions()

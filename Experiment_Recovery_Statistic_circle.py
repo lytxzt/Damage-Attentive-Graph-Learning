@@ -5,6 +5,7 @@ import Utils
 import matplotlib.animation as animation
 from copy import deepcopy
 from Main_algorithm_GCN.GCO import GCO
+import matplotlib.pyplot as plt
 
 # determine if draw the video
 """
@@ -12,13 +13,14 @@ Note: if true, it may take a little long time
 """
 config_draw_video = False
 show_distribution = True
-max_step = 500
-
+max_step = 450
 
 meta_param_use = False
+draw = False
 
+# for dnum in [100]:
 for dnum in [100]:
-    for mode in [6, 7]:
+    for mode in [7]:
         config_algorithm_mode = mode
         algorithm_mode = {0: "CSDS",
                         1: "HERO",
@@ -27,7 +29,8 @@ for dnum in [100]:
                         4: "GCN_2017",
                         5: "CR-MGC",
                         6: "DEMD",
-                        7: "DD-GCN"}
+                        7: "DD-GCN",
+                        8: "DF-scaled"}
 
         print("SCC problem Starts...")
         print("------------------------------")
@@ -70,6 +73,7 @@ for dnum in [100]:
 
             np.random.seed(seed[case])
             random.seed(seed[case])
+            # print(seed[case])
 
             # destruction
             storage_remain_list.append(deepcopy(swarm.remain_list))
@@ -103,7 +107,7 @@ for dnum in [100]:
             
             # check if the UED break the CCN of the USNET
             if num_cluster == 1:
-                print("case %d: not distructed" % (case))
+                print(f"case {case}: not distructed")
                 case += 1
                 continue
 
@@ -118,12 +122,12 @@ for dnum in [100]:
                 num_cluster_list.append(temp_cluster)
                 # print("---------------------------------------")
                 if temp_cluster == 1:
-                    print("case %d: step %d ---num of clusters %d -- connected" % (case, step, environment.check_the_clusters()))
+                    print(f"case {case}: step {step} ---num of clusters {environment.check_the_clusters()} -- connected")
                 else:
                     num_connected_steps += 1
-                    print("case %d: step %d ---num of clusters %d -- unconnected" % (case, step, environment.check_the_clusters()), end='\r')
+                    print(f"case {case}: step {step} ---num of clusters {environment.check_the_clusters()}--unconnected", end='\r')
                     if step == max_step-1:
-                        print("case %d: step %d ---num of clusters %d -- unconnected" % (case, step, environment.check_the_clusters()))
+                        print(f"case {case}: step {step} ---num of clusters {environment.check_the_clusters()}--unconnected")
 
                 storage_remain_list.append(deepcopy(swarm.remain_list))
 
@@ -142,7 +146,6 @@ for dnum in [100]:
                     deepcopy(Utils.make_A_matrix(remain_positions, len(swarm.remain_list), config_communication_range)))
 
                 if environment.check_the_clusters() == 1:
-                    # print("  case %d, step %f" % (case, step))
                     break
 
                 # update
@@ -167,7 +170,15 @@ for dnum in [100]:
 
             case += 1
 
-        with open(f'./Logs/{algorithm_mode[config_algorithm_mode]}_d{config_num_destructed_UAVs}.txt', 'w') as f:
+            if draw:
+                plt.scatter(initial_remain_positions[:,0], initial_remain_positions[:,1], c='black')
+                plt.scatter(final_positions[:,0], final_positions[:,1], c='g')
+                plt.text(10, 10, f'best time: {max_time}')
+                plt.xlim(0, 1000)
+                plt.ylim(0, 1000)
+                plt.show()
+
+        with open(f'./Logs/{algorithm_mode[config_algorithm_mode]}_mode3_d{config_num_destructed_UAVs}.txt', 'w') as f:
             print('case:\n', storage_random_seed, file=f)
             print('\nconnect_step:\n', storage_connect_step, file=f)
             print('\navg_connect_step:\n', np.mean(np.array(storage_connect_step)), file=f)
