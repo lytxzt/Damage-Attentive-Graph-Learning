@@ -18,6 +18,9 @@ draw = False
 
 dimension = config_dimension
 
+torch.manual_seed(3407)
+torch.cuda.manual_seed_all(3407)
+
 class DEMD:
     def __init__(self):
         self.hidden_dimension = best_hidden_dimension

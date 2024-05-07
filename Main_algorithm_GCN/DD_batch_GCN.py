@@ -19,6 +19,9 @@ draw = False
 batch_size = 8
 embedding_distence = 450
 
+torch.manual_seed(3407)
+torch.cuda.manual_seed_all(3407)
+
 '''
 mode 1: tahn    + L1
 mode 2: no tahn + L1
@@ -45,6 +48,7 @@ class DD_GCN:
         FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
         optimizer = Adam(gcn_network.parameters(), lr=0.0001)
+        # optimizer = SGD(gcn_network.parameters(), lr=0.01, momentum=0.9)
 
         remain_positions = []
         for i in remain_list:
@@ -66,8 +70,12 @@ class DD_GCN:
 
         # damage differential
         A_hat_batch = []
+
+        all_neighbor = calculate_khop_neighbour(fixed_positions, config_communication_range)
+        # batch_size = max([len(hop) for hop in all_neighbor])-1
+
         for khop in range(2, 2+batch_size):
-            A = make_dd_khop_A_matrix(fixed_positions, num_remain, config_communication_range, khop)
+            A = make_dd_khop_A_matrix(all_neighbor, fixed_positions, num_remain, khop)
             # A = Utils.make_A_matrix(remain_positions, num_remain, config_communication_range)
 
             D = Utils.make_D_matrix(A, num_of_agents)
@@ -108,8 +116,8 @@ class DD_GCN:
         # print("=======================================")
         for train_step in range(1000):
             # print(train_step)
-            # if loss_ % 5000 > 1300 and train_step > 10:
-            #     optimizer = Adam(gcn_network.parameters(), lr=0.0001)
+            # if train_step == 100:
+            #     optimizer = SGD(gcn_network.parameters(), lr=0.0001, momentum=0.8, dampening=0, weight_decay=0.001, nesterov=False)
 
             final_positions_list = gcn_network(fixed_positions_batch, A_hat, num_remain)
             
@@ -231,7 +239,7 @@ class DD_GCN:
             loss_optimizer = torch.optim.Adam([loss_weights], lr=0.01)
             
             loss_ = best_loss_k.cpu().data.numpy()
-            print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_:.2f}", end='\r')
+            print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_:.6f}", end='\r')
             # print(f"episode {train_step}, num {num.cpu().data.numpy()}, loss {loss_}, weights {loss_weights.cpu().data.numpy()}", end='\r')
             # print(torch.norm(final_positions[max_index] - remain_positions[max_index]), torch.norm(centroid - centrepoint))
 
@@ -308,8 +316,8 @@ class GraphConvolution(Module):
                + str(self.out_features) + ')'
 
 
-def make_dd_khop_A_matrix(positions, num_remain, d=config_communication_range, khop=5):
-    all_neighbor = calculate_khop_neighbour(positions, d)
+def make_dd_khop_A_matrix(all_neighbor, positions, num_remain, khop=5):
+    # all_neighbor = calculate_khop_neighbour(positions, d)
 
     num_of_agents = len(positions)
     A = np.zeros((num_of_agents, num_of_agents))

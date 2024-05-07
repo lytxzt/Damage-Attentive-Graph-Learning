@@ -19,8 +19,8 @@ meta_param_use = False
 draw = False
 
 # for dnum in [100]:
-for dnum in [100]:
-    for mode in [7]:
+for dnum in [10, 20, 30, 40, 50]:
+    for mode in range(1, 9):
         config_algorithm_mode = mode
         algorithm_mode = {0: "CSDS",
                         1: "HERO",
@@ -178,7 +178,7 @@ for dnum in [100]:
                 plt.ylim(0, 1000)
                 plt.show()
 
-        with open(f'./Logs/{algorithm_mode[config_algorithm_mode]}_mode3_d{config_num_destructed_UAVs}.txt', 'w') as f:
+        with open(f'./Logs/d{config_num_destructed_UAVs}/{algorithm_mode[config_algorithm_mode]}_d{config_num_destructed_UAVs}.txt', 'w') as f:
             print('case:\n', storage_random_seed, file=f)
             print('\nconnect_step:\n', storage_connect_step, file=f)
             print('\navg_connect_step:\n', np.mean(np.array(storage_connect_step)), file=f)

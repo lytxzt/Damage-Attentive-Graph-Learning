@@ -125,9 +125,9 @@ class Swarm:
 
             elif self.algorithm_mode == 2:
                 # centering
-                # for i in self.remain_list:
-                #     actions[i] = centering_fly(self.true_positions, self.remain_list, i)
-                actions = centering_scaled(self.true_positions, self.remain_list, config_dimension)
+                for i in self.remain_list:
+                    actions[i] = centering_fly(self.true_positions, self.remain_list, i)
+                # actions = centering_scaled(self.true_positions, self.remain_list, config_dimension)
 
             elif self.algorithm_mode == 3:
                 # SIDR

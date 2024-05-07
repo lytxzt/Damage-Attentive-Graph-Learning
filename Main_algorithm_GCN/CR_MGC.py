@@ -16,6 +16,9 @@ lr = 0.00001
 
 dimension = config_dimension
 
+torch.manual_seed(3407)
+torch.cuda.manual_seed_all(3407)
+
 class CR_MGC:
     def __init__(self, use_meta=False):
         self.hidden_dimension = best_hidden_dimension
