@@ -1,6 +1,8 @@
 import numpy as np
-from copy import deepcopy
 import pandas as pd
+import torch
+from copy import deepcopy
+from operator import itemgetter
 from Configurations import *
 
 
@@ -34,16 +36,24 @@ def check_number_of_clusters(L, num_of_agents):
     return eig_0_counter == 1, eig_0_counter
 
 
-def normalized_single_vector(speed):
-    normalized_speed = speed / np.linalg.norm(speed)
-    return deepcopy(normalized_speed)
+def check_number_of_clusters_torch(positions, d):
+    m, n = positions.shape
+    G = torch.mm(positions, positions.T)
+    H = torch.tile(torch.diag(G), (m, 1))
+    D = torch.sqrt(H + H.T - 2*G)
+    # print(m, n, D)
+    A = torch.where(D > d, 0, 1.0)
+    # print(m, n, A)
+    D = torch.diag(torch.sum(A, dim=1))
+    # print(m, n, D)
+    L = D - A
 
-
-def normalized_batch_vector(speed):
-    normalized_speed = deepcopy(speed)
-    for i in range(len(speed)):
-        normalized_speed[i] = speed[i] / np.linalg.norm(speed[i])
-    return deepcopy(normalized_speed)
+    e_vals, e_vecs = torch.linalg.eigh(L)
+    # print(e_vals.real)
+        
+    num = torch.sum(torch.where(e_vals.real < 0.0001, 1, 0))
+    # print(torch.sum(e_vals), torch.trace(L), torch.sum(A))
+    return e_vals.real, num
 
 
 def calculate_d_max(positions):
@@ -54,69 +64,6 @@ def calculate_d_max(positions):
                 d_max = deepcopy(np.linalg.norm(positions[j] - positions[i]))
 
     return deepcopy(d_max)
-
-
-def store_dataframe_to_excel(data, filename, sheetname="None"):
-    """
-    :param data: receive dataframe datatype (not numpy)
-    :param filename:
-    :param sheetname:
-    :return: storage flag
-    """
-    # data.to_excel(filename, sheet_name=sheetname)
-    if isinstance(data, pd.DataFrame):
-        try:
-            data.to_excel(filename, sheet_name=sheetname)
-            print("Store successful")
-        except:
-            print("Storage error")
-    else:
-        print("Data type error")
-
-
-def calculate_norm(speeds):
-    normalized_speed = np.zeros((len(speeds)))
-    for i in range(len(normalized_speed)):
-        normalized_speed[i] = np.linalg.norm(speeds[i])
-    return deepcopy(normalized_speed)
-
-
-# def random_sampling():
-#     """
-#     :return: list with form [ , , , , ,]
-#     """
-#     list_ = []
-#     count = 0
-#     while count < config_sample_number:
-#         random_number = np.random.randint(0, config_buffer_capacity, 1).tolist()[0]
-#         if random_number not in list_:
-#             list_.append(random_number)
-#             count += 1
-#     return list_
-
-
-def soft_update(target, source, t):
-    for target_param, source_param in zip(target.parameters(),
-                                          source.parameters()):
-        target_param.data.copy_(
-            (1 - t) * target_param.data + t * source_param.data)
-
-
-def normalize_positions(positions):
-    positions = np.array(positions, dtype=np.float64)
-    norm_positions = deepcopy(positions)
-    norm_positions[:, 0] = 2 * (positions[:, 0] - 0.5 * config_width) / config_width
-    norm_positions[:, 1] = 2 * (positions[:, 1] - 0.5 * config_length) / config_length
-    norm_positions[:, 2] = 2 * (positions[:, 2] - 0.5 * config_height) / config_height
-    return deepcopy(norm_positions)
-
-
-def normalize_single_positions(positions):
-    norm_positions = deepcopy(np.array(positions, dtype=np.float64))
-    norm_positions[0] = float(2 * (positions[0] - 0.5 * config_width) / config_width)
-    norm_positions[1] = float(2 * (positions[1] - 0.5 * config_length) / config_length)
-    norm_positions[2] = float(2 * (positions[2] - 0.5 * config_height) / config_height)
-    return deepcopy(norm_positions)
 
 
 def check_if_a_connected_graph(remain_positions, remain_num):
@@ -258,10 +205,94 @@ def union_set(listA, listB):
     return deepcopy(union_set)
 
 
-# my function start here
-def calculate_eigen_central(A, num_of_agents):
-    e_vals, e_vecs = np.linalg.eig(A)
-    
+def smallest_d_algorithm(positions, num, d0):
+    A = make_A_matrix(positions, num, d0)
+    d_min = deepcopy(d0)
+    unsorted_list = []
+    dis = []
+    sorted_list = []
+    for i in range(num - 1):
+        for j in range(i + 1, num):
+            unsorted_list.append(deepcopy({"start": i,
+                                           "end": j,
+                                           "distance": np.linalg.norm(positions[i] - positions[j])}))
+            dis.append(deepcopy(np.linalg.norm(positions[i] - positions[j])))
+    sorted_index = [index for index, value in sorted(enumerate(dis), key=itemgetter(1))]
+    for i in range(len(sorted_index)):
+        sorted_list.append(unsorted_list[sorted_index[i]])
 
-def calculate_degree_central(A, num_of_agents):
-    return deepcopy(np.sum(A, axis=0))
+    # find the threshold
+    threshold_for_d0 = 0
+    for i in range(len(sorted_index)):
+        if sorted_list[i]["distance"] > d_min:
+            threshold_for_d0 = deepcopy(i)
+            break
+    for i in range(threshold_for_d0, len(sorted_index)):
+        A[sorted_list[i]["start"], sorted_list[i]["end"]] = 1
+        A[sorted_list[i]["end"], sorted_list[i]["start"]] = 1
+        D = make_D_matrix(A, num)
+        L = D - A
+        connected_flag, num_cluster = check_number_of_clusters(L, num)
+        if connected_flag:
+            d_min = deepcopy(sorted_list[i]["distance"])
+            break
+    return deepcopy(d_min)
+
+def calculate_khop_neighbour(positions, d):
+    num_of_agents = len(positions)
+    neighbour_i_1hop = []
+    for i in range(num_of_agents):
+        neighbour = []
+        for j in range(num_of_agents):
+            if i==j: continue
+
+            if np.linalg.norm(positions[i, :] - positions[j, :]) <= d:
+                neighbour.append(j)
+
+        neighbour_i_1hop.append(deepcopy(neighbour))
+
+    all_neighbour = []
+    for i in range(num_of_agents):
+        cnt = 0
+        neighbour_i_all = []
+        neighbour_i_multihop = deepcopy(neighbour_i_1hop[i])
+
+        while len(neighbour_i_multihop) > 0:
+            neighbour_i_all.append(deepcopy(neighbour_i_multihop))
+            neighbour_i_multihop = []
+
+            for j in neighbour_i_all[cnt]:
+                for k in neighbour_i_1hop[j]:
+                    if k not in sum(neighbour_i_all, []) and k not in neighbour_i_multihop and k != i:
+                        neighbour_i_multihop.append(k)
+
+            cnt += 1
+            
+        all_neighbour.append(deepcopy(neighbour_i_all))
+
+    return deepcopy(all_neighbour)
+
+
+def make_khop_A_matrix(all_neighbor, positions, num_remain, khop=5):
+    # all_neighbor = calculate_khop_neighbour(positions, d)
+
+    num_of_agents = len(positions)
+    A = np.zeros((num_of_agents, num_of_agents))
+
+    for i in range(num_remain):
+        for j in range(num_remain, num_of_agents-1):
+            hop = 1
+            # if np.linalg.norm(positions[j] - central_point) >= embedding_distence : continue
+            # dis = np.linalg.norm(positions[j] - central_point) / embedding_distence 
+            # dis = np.cos(dis*np.pi/2)
+            while(j not in all_neighbor[i][hop-1]):hop+=1
+            if hop <= khop:
+                A[i, j] = 1
+                A[j, i] = 1
+
+    for i in range(num_of_agents-1):
+        A[i, num_of_agents-1] = 1
+        A[num_of_agents-1, i] = 1
+
+    # print(A)
+    return deepcopy(A)
