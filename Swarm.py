@@ -1,24 +1,22 @@
-import Utils
 from copy import deepcopy
+
+import Utils
 from Configurations import *
 from Environment import Environment
-from Main_algorithm_GCN.GCO import GCO
-from Main_algorithm_GCN.CR_MGC import CR_MGC
-from Main_algorithm_GCN.DEMD import DEMD
-# from Main_algorithm_GCN.DD_GCN import DD_GCN
-from Main_algorithm_GCN.DD_batch_GCN import DD_GCN
-from Traditional_Algorithm.GCN_2017 import GCN_2017
-from Traditional_Algorithm.Centering import centering_fly, centering_scaled
-from Traditional_Algorithm.SIDR import SIDR
-from Traditional_Algorithm.CSDS import CSDS
-from Traditional_Algorithm.HERO import HERO
-from Traditional_Algorithm.DF_scaled import df_scaled
 
-import torch
+from Previous_Algorithm.CR_MGC import CR_MGC
+from Previous_Algorithm.DEMD import DEMD
+from Previous_Algorithm.GCN_2017 import GCN_2017
+from Previous_Algorithm.Centering import centering_fly
+from Previous_Algorithm.SIDR import SIDR
+from Previous_Algorithm.HERO import HERO
+
+from MDSG_Algorithm.MDSG_GC_batch import MDSG_GC_batch
+from MDSG_Algorithm.MDSG_APF import mdsg_apf, mdsg_apf_khop
 
 
 class Swarm:
-    def __init__(self, algorithm_mode=0, enable_csds=False, meta_param_use=False, khop=4):
+    def __init__(self, algorithm_mode=1, use_pretrained=False, khop=3):
         self.initial_positions = deepcopy(config_initial_swarm_positions)
         self.remain_list = [i for i in range(config_num_of_agents)]
         self.remain_num = config_num_of_agents
@@ -35,16 +33,15 @@ class Swarm:
         # 0 for CSDS, 1 for centering, 2 for SIDR, 3 for GCN_2017, 4 for CR-GCM, 5 for CR_GCM_N
         self.algorithm_mode = algorithm_mode
 
-        self.gco = GCO()
         self.if_once_gcn = False
         self.once_destroy_gcn_speed = np.zeros((self.num_of_agents, config_dimension))
         self.max_time = 0
 
         self.khop = khop
         self.demd = DEMD()
-        self.dd_gcn = DD_GCN()
+        self.mdsg_gc = MDSG_GC_batch()
         
-        self.cr_gcm = CR_MGC(use_meta=meta_param_use)
+        self.cr_gcm = CR_MGC(use_meta=False)
         self.gcn_2017 = GCN_2017()
 
         self.hero = HERO(self.initial_positions)
@@ -52,8 +49,6 @@ class Swarm:
         self.if_once_gcn_network = False
         self.once_destroy_gcn_network_speed = np.zeros((self.num_of_agents, config_dimension))
 
-        if enable_csds:
-            self.csds = CSDS(config_num_of_agents, self.initial_positions)
         self.best_final_positions = 0
 
         self.notice_destroy = False
@@ -107,15 +102,8 @@ class Swarm:
             # print("connected")
             return deepcopy(actions), max_time
         else:
-            if self.algorithm_mode == 0:
-                # CSDS
-                actions_csds, max_time = self.csds.csds(deepcopy(self.true_positions), deepcopy(self.remain_list))
-
-                for i in self.remain_list:
-                    actions[i] = 0.05 * centering_fly(self.true_positions, self.remain_list, i) + 0.95 * actions_csds[i]
-
-            elif self.algorithm_mode == 1:
-                # HERO
+            # HERO
+            if self.algorithm_mode == 1:
                 actions_hero = self.hero.hero(
                     Utils.difference_set([i for i in range(self.num_of_agents)], self.remain_list), self.true_positions)
 
@@ -123,19 +111,19 @@ class Swarm:
                     actions[i] = 0.2 * centering_fly(self.true_positions, self.remain_list, i) + 0.8 * actions_hero[i]
 
 
+            # centering
             elif self.algorithm_mode == 2:
-                # centering
                 for i in self.remain_list:
                     actions[i] = centering_fly(self.true_positions, self.remain_list, i)
-                # actions = centering_scaled(self.true_positions, self.remain_list, config_dimension)
 
+
+            # SIDR
             elif self.algorithm_mode == 3:
-                # SIDR
                 actions = SIDR(self.true_positions, self.remain_list)
 
 
+            # GCN
             elif self.algorithm_mode == 4:
-                # GCN_2017
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
                         if np.linalg.norm(
@@ -153,15 +141,14 @@ class Swarm:
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
 
+            
+            # CR-MGC
             elif self.algorithm_mode == 5:
-                # proposed algorithm
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
                         if np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
                             actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
 
-                        # else:
-                        #     print("%d already finish" % self.remain_list[i])
                     max_time = deepcopy(self.max_time)
                 else:
                     self.if_once_gcn_network = True
@@ -171,61 +158,55 @@ class Swarm:
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
 
-            elif self.algorithm_mode == 6:
-                # proposed algorithm DEMD
-                if self.if_once_gcn_network:
-                    for i in range(len(self.remain_list)):
-                        if np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i]) >= 0.55:
-                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
 
-                        # else:
-                        #     print("%d already finish" % self.remain_list[i])
-                    max_time = deepcopy(self.max_time)
-                else:
-                    self.if_once_gcn_network = True
-                    # actions, max_time, best_final_positions = self.demd.demd(deepcopy(self.true_positions),
-                    #                                                              deepcopy(self.remain_list),
-                    #                                                              self.khop)
-                    actions, max_time, best_final_positions = self.demd.demd_adaptive(deepcopy(self.true_positions),
-                                                                                          deepcopy(self.remain_list))
-                    self.once_destroy_gcn_network_speed = deepcopy(actions)
-                    self.best_final_positions = deepcopy(best_final_positions)
-                    self.max_time = deepcopy(max_time)
-            
-            elif self.algorithm_mode == 7:
-                # damage differential
+            # DEMD
+            elif self.algorithm_mode == 6:
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
                         d = np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i])
                         if d >= 1:
                             actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
-                        elif d > 0.1:
-                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]]) * d
-
-                        # else:
-                        #     print("%d already finish" % self.remain_list[i])
+                        elif d > 0.0001:
+                            actions[self.remain_list[i]] = deepcopy(self.best_final_positions[i] - self.true_positions[self.remain_list[i]])
                     max_time = deepcopy(self.max_time)
                 else:
                     self.if_once_gcn_network = True
-                    # actions, max_time, best_final_positions = self.dd_gcn.dd_gcn(deepcopy(self.true_positions),
-                    #                                                              deepcopy(self.remain_list))
-                    # actions, max_time, best_final_positions = self.dd_gcn.dd_adaptive(deepcopy(self.true_positions),
-                    #                                                                       deepcopy(self.remain_list))
-                    actions, max_time, best_final_positions = self.dd_gcn.dd_batch(deepcopy(self.true_positions),
-                                                                                          deepcopy(self.remain_list))
+                    # actions, max_time, best_final_positions = self.demd.demd(deepcopy(self.true_positions), deepcopy(self.remain_list), self.khop)
+                    actions, max_time, best_final_positions = self.demd.demd_adaptive(deepcopy(self.true_positions), deepcopy(self.remain_list))
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
             
-            elif self.algorithm_mode == 8:
-                # differential feilds
+            
+            # proposed MDSG-APF algorithm
+            elif self.algorithm_mode == 7:
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
                         actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
                 else:
                     self.if_once_gcn_network = True
-                    actions = df_scaled(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range)
+                    # actions = mdsg_apf(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range, self.khop)
+                    actions = mdsg_apf_khop(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range, 8)
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
+                    
+            
+            # proposed MDSG-GC algorithm
+            elif self.algorithm_mode == 8:
+                if self.if_once_gcn_network:
+                    for i in range(len(self.remain_list)):
+                        d = np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i])
+                        if d >= 1:
+                            actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
+                        elif d > 0.0001:
+                            actions[self.remain_list[i]] = deepcopy(self.best_final_positions[i] - self.true_positions[self.remain_list[i]])
+
+                    max_time = deepcopy(self.max_time)
+                else:
+                    self.if_once_gcn_network = True
+                    actions, max_time, best_final_positions = self.mdsg_gc.mdsg_gc_batch(deepcopy(self.true_positions), deepcopy(self.remain_list))
+                    self.once_destroy_gcn_network_speed = deepcopy(actions)
+                    self.best_final_positions = deepcopy(best_final_positions)
+                    self.max_time = deepcopy(max_time)
 
             else:
                 print("No such algorithm")
@@ -244,9 +225,6 @@ class Swarm:
                 flag = False
                 break
         return flag
-
-    def save_GCN(self, filename):
-        torch.save(self.cr_gcm.gcn_network, filename)
 
 
 if __name__ == "__main__":
