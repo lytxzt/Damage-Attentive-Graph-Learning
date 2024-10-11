@@ -1,6 +1,5 @@
 import torch
 from torch.optim import Adam
-import matplotlib.pyplot as plt
 from copy import deepcopy
 
 import Utils
@@ -13,8 +12,7 @@ batch_size = 10
 # lr = 0.00001
 alpha = 0.12
 
-draw_flag = False
-save_flag = False
+save_loss_curve = False
 
 torch.manual_seed(3407)
 torch.cuda.manual_seed_all(3407)
@@ -42,7 +40,7 @@ class MDSG_GC_batch:
             gcn_network.cuda()
 
         if self.use_pretrained:
-            gcn_network = torch.load("./Pretrained_model/setup_param_tanh.pt")
+            gcn_network = torch.load("./Pretrained_model/model.pt")
             # gcn_network.load_state_dict(setup_param())
 
         # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
@@ -87,11 +85,6 @@ class MDSG_GC_batch:
             k0 = 1 / A_norm
             K = 0.5 * k0
             A_hat_khop = np.eye(num_of_agents) - K * L
-
-            # D_norm = np.array([num_destructed for _ in range(num_remain)] + [num_remain for _ in range(num_destructed)])
-            # D_tilde_sqrt = np.diag(D_norm ** (-0.5))
-            # A_hat_khop = np.eye(num_of_agents) - 0.99 * D_tilde_sqrt @ L @ D_tilde_sqrt
-
             
             A_hat_khop = torch.FloatTensor(A_hat_khop).type(FloatTensor)
             A_hat_batch.append(A_hat_khop)
@@ -118,7 +111,10 @@ class MDSG_GC_batch:
         # print("---------------------------------------")
         # print("start training GCN ... ")
         # print("=======================================")
-        for train_step in range(1000):
+        for train_step in range(50):
+            # if train_step == 200:
+            #     torch.save(gcn_network, './Pretrained_model/model.pt')
+
             final_positions_list = gcn_network(fixed_positions_batch, A_hat, num_remain)
             
             if dimension == 3:
@@ -211,17 +207,6 @@ class MDSG_GC_batch:
             num_ = num.cpu().data.numpy() if torch.is_tensor(num) else num
             print(f"episode {train_step}, num {num_}, loss {loss_:.6f}", end='\r')
 
-            if draw_flag and train_step % 200 == 0:
-                remain_positions_ = remain_positions.cpu().data.numpy()
-                final_positions_ = final_positions.cpu().data.numpy()
-
-                plt.scatter(remain_positions_[:,0], remain_positions_[:,1], c='black')
-                plt.scatter(final_positions_[:,0], final_positions_[:,1], c='g')
-                plt.text(10, 10, f'best loss: {loss_}')
-                # plt.xlim(0, 1000)
-                # plt.ylim(0, 1000)
-                plt.show()
-
             num_storage.append(int(num_))
             loss_storage.append(loss_ % 5000)
             
@@ -242,19 +227,8 @@ class MDSG_GC_batch:
         max_time = temp_max_distance / config_constant_speed
 
         print(f"trained: max time {max_time}, best episode {best_final_epoch}, best k-hop {best_final_k+1}")
-
-        if draw_flag:
-            remain_positions_ = remain_positions.cpu().data.numpy()
-
-            plt.scatter(remain_positions_[:,0], remain_positions_[:,1], c='black')
-            plt.scatter(best_final_positions[:,0], best_final_positions[:,1], c='g')
-            plt.text(10, 10, f'best time: {max_time}')
-            plt.xlim(0, 1000)
-            plt.ylim(0, 1000)
-            plt.show()
-        # print(max_time)
             
-        if save_flag:
+        if save_loss_curve:
             with open(f'./Logs/loss/loss_d{num_destructed-1}_setup.txt', 'a') as f:
                 print(loss_storage, file=f)
 

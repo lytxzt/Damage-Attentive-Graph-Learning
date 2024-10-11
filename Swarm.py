@@ -39,7 +39,7 @@ class Swarm:
 
         self.khop = khop
         self.demd = DEMD()
-        self.mdsg_gc = MDSG_GC_batch()
+        self.mdsg_gc = MDSG_GC_batch(use_pretrained=True)
         
         self.cr_gcm = CR_MGC(use_meta=False)
         self.gcn_2017 = GCN_2017()

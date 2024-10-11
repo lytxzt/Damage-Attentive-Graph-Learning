@@ -9,6 +9,152 @@ from copy import deepcopy
 colors = list(mcolors.TABLEAU_COLORS.keys())
 plt.rcParams['axes.axisbelow'] = True
 
+
+# draw Fig.7
+def draw_khop():
+    khop = [i+1 for i in range(8)]
+    num_destroyed = [i for i in range(10, 200, 10)]
+    # num_destroyed = [50, 100, 150]
+
+    khop_step = []
+    khop_count = [0 for _ in range(8)]
+
+    methods = "MDSG-APF"
+    khop_labels = [f'$N_D$={i}' for i in num_destroyed]
+
+    for dnum in num_destroyed:
+        khop_step_dnum = []
+        
+        with open(f'./Logs/khop/{methods}_d{dnum}.txt', 'r') as f:
+            data = f.read().split('\n')
+
+        step_list = [d.replace(' ','').strip('[').strip(']') for d in data if len(d) > 0]
+        for step in step_list:
+            s = [float(s)/10 for s in step.split(',')]
+            khop_step_dnum.append(s)
+
+            index = np.argwhere(s == np.min(s)).flatten()
+            for i in index:
+                khop_count[i] += 1/len(index)
+
+        # print(khop_step_dnum)
+        khop_step.append(np.mean(khop_step_dnum, axis=0))
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.bar(khop, khop_count, label='distribution of $k^*$', width=0.5)
+    ax1.set_xlabel('Value of $k$', fontdict={'family':'serif', 'size':14})
+    ax1.set_ylabel('Distribution of $k^*$', fontdict={'family':'serif', 'size':14})
+
+    ax2 = ax1.twinx()
+    ax2.plot(khop, np.mean(khop_step, axis=0), c='r', marker='^', label='recovery time $T_{rc}$', linewidth=2)
+    ax2.set_ylabel('Average recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
+
+    # plt.xlim(8,192)
+    # plt.ylim(-2,54)
+    ax1.grid(axis='y', linestyle='--')
+    fig.legend(loc='upper right',bbox_to_anchor=(0.76,0.86))
+
+    plt.gcf().subplots_adjust(right=0.85)
+
+    plt.savefig('./Figs/fig7.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+# draw Fig.8
+def draw_batch():
+    plt.figure()
+    # tips = sns.load_dataset('tips')
+    # sns.boxplot(x='day', y='tip', hue='sex', data=tips)
+    # print(tips)
+    methods = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9', 'batch']
+    methods_label = ['k=1', 'k=2', 'k=3', 'k=4', 'k=5', 'k=6', 'k=7', 'k=8', 'k=9', 'batch\nprocessing']
+    # methods = ['k1', 'k2']
+    variable = [50, 100, 150]
+
+    # positions = [[i for i in range(1, 4*len(methods), 4)], [i for i in range(2, 4*len(methods), 4)], [i for i in range(3, 4*len(methods), 4)]]
+    positions = [[i for i in range(k, (len(variable)+1)*len(methods), len(variable)+1)] for k in range(1, len(variable)+1)]
+    position_tick = [i for i in range(2, (len(variable)+1)*len(methods), len(variable)+1)]
+
+    df = {'d50':[], 'd100':[], 'd150':[]}
+
+    for dnum in variable:
+        step_list = []
+
+        for m in methods:
+            with open(f'./Logs/batch/MDSG-GC_d{dnum}_{m}.txt', 'r') as f:
+                    data = f.read().split('\n')
+
+            step = data[4].replace(' ','').strip('[').strip(']')
+            step = [min(float(s)/10, 49.9) for s in step.split(',')]
+            step_list.append(step)
+
+        df[f'd{dnum}'] = deepcopy(step_list)
+
+    # print(df)
+    handles = []
+    for i, var in enumerate(variable):
+        bp = plt.boxplot(df[f'd{var}'], positions=positions[i], patch_artist=True)
+        handles.append(bp['boxes'][0])
+
+        for patch in bp['boxes']:
+            patch.set_facecolor(mcolors.TABLEAU_COLORS[colors[i+2]])
+
+    plt.xticks(position_tick, methods_label)
+    plt.legend(handles=handles, labels=[f'$N_D=${var}' for var in variable], loc='upper right')
+    plt.grid(axis='y', linestyle='--')
+    
+    # plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
+    plt.savefig('./Figs/fig8.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+# draw Fig.9
+def draw_loss_curve():
+
+    file_loss = ['loss_d50_setup', 'loss_d100_setup', 'loss_d150_setup', 'loss_d50', 'loss_d100', 'loss_d150']
+    loss_label = ['$N_D=50$', '$N_D=100$', '$N_D=150$', '$N_D=50$', '$N_D=100$', '$N_D=150$']
+
+    loss_curve_list = []
+    loss_std_list = []
+    step_range = range(1000)
+
+    for k in range(len(file_loss)):
+        with open(f'./Logs/loss/{file_loss[k]}.txt', 'r') as f:
+            data = f.read()
+
+        data = data.split('\n')[:-1]
+
+        for i in range(len(data)):
+            data[i] = [float(d) for d in data[i].replace(' ','').strip('[').strip(']').split(',')]
+
+        loss = np.array(data)
+        # print(loss)
+        # loss = loss[:5]
+        loss_mean = np.mean(loss, axis=0)
+        loss_curve_list.append(loss_mean)
+
+        loss_std = 1.96*np.std(loss, ddof=1)/np.sqrt(len(loss))
+        loss_std_list.append(loss_std)
+
+
+    plt.figure()
+    for k in range(len(file_loss)):
+        plt.plot(step_range, loss_curve_list[k], label=loss_label[k], c=colors[k], linewidth=2)
+        plt.fill_between(step_range, loss_curve_list[k]-loss_std_list[k], loss_curve_list[k]+loss_std_list[k], facecolor=colors[k], alpha=0.2)
+
+    plt.xlim(0,100)
+    # plt.ylim(100,1100)
+    plt.grid(linestyle='--')
+    plt.xlabel('Training Episode', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Loss Curve', fontdict={'family':'serif', 'size':14})
+    plt.legend(loc='upper right', ncol=2, title='   pre-trained              random    \n  initialization           initialization  ')
+    plt.savefig('./Figs/fig9.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+# draw Fig.10a
 def draw_method_figs():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
@@ -18,7 +164,7 @@ def draw_method_figs():
     step_methods_std = []
 
     marklist = ['o', '^', 's', 'd', 'h', 'v', '>', '8']
-    methods = ["DD-GCN", "DF-scaled", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    methods = ["MDSG-GC", "MDSG-APF", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
     method_labels = ["MDSG-GC", "MDSG-APF", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
 
     for m in methods:
@@ -62,7 +208,7 @@ def draw_method_figs():
     plt.plot(num_destroyed, step_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]],marker=marklist[1], linewidth=2)
     plt.plot(num_destroyed, step_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]],marker=marklist[0], linewidth=2)
 
-    plt.savefig('./res1.png', dpi=600, bbox_inches='tight')
+    plt.savefig('./Figs/fig10a.png', dpi=600, bbox_inches='tight')
     plt.show()
 
     ratio = []
@@ -72,6 +218,7 @@ def draw_method_figs():
     print(ratio, sum(ratio)/len(num_destroyed))
 
 
+# draw Fig.10b
 def draw_spatial_coverage():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
@@ -90,7 +237,7 @@ def draw_spatial_coverage():
     coverage_methods_std = [[0.005164016935172642, 0.006280623147680463, 0.006349164613790299, 0.007037124437072787, 0.00778364171335366, 0.008006848821802047, 0.011482439628413967, 0.010769280145376326, 0.010680714133991945, 0.0115880177425518, 0.011562086753975, 0.015499752619390307, 0.018263029875359358, 0.02011443882565077, 0.019971947877466572, 0.017024216945770124, 0.015708242743491727, 0.00916888193361664, 0.007449639073074311], [0.012071340352742863, 0.00900042365037345, 0.01211444014990316, 0.014825775790554975, 0.020234959431160795, 0.0226474705205137, 0.030545807617139438, 0.030119152088311243, 0.032789429870032916, 0.023533945890900045, 0.023816684403525752, 0.023113108642492136, 0.023088513417324923, 0.01751067425257052, 0.01882494270803785, 0.01633170734394814, 0.013765080229907335, 0.007205807162169809, 0.00464466101052132], [0.052566956021553826, 0.04122931645896945, 0.04358943564797798, 0.04155485361042807, 0.04836445208107116, 0.0586140009765723, 0.06470660722025666, 0.05947320303122341, 0.06435666272505393, 0.05404577161445782, 0.045292454772044986, 0.04574169291278129, 0.03934527420997144, 0.03565263874957842, 0.02960817491228032, 0.02441588760806246, 0.014997221993624455, 0.00870894586880823, 0.005062800484226115], [0.028140383786482166, 0.021733873918608225, 0.03690258174335679, 0.0441331493345681, 0.043954593380992335, 0.048654435990514, 0.051441591696489083, 0.05119624869638891, 0.05393334489447707, 0.04126567704448232, 0.03690027183950489, 0.02946953692100325, 0.02341486943060018, 0.019444355682434116, 0.01965314172270739, 0.014903471296361118, 0.014845932558468063, 0.01206918756527795, 0.007266287090729348], [0.016600864539432242, 0.01726773389668875, 0.023384422993803552, 0.027503187057832435, 0.03586704816236548, 0.03407020905226816, 0.03460339454159637, 0.03242595020416412, 0.036443854392037636, 0.033148873838583566, 0.029926668069118402, 0.024407605997728322, 0.01992317567381207, 0.021233210716307672, 0.016303944071905403, 0.014916742425670631, 0.018312415548373637, 0.012005107991926807, 0.006923392813456899]]
 
     marklist = ['o', '^', 's', 'd', 'v']
-    methods = ["DD-GCN", "DF-scaled", "CEN", "CR-MGC", "DEMD"]
+    methods = ["MDSG-GC", "MDSG-APF", "CEN", "CR-MGC", "DEMD"]
     method_labels = ["MDSG-GC", "MDSG-APF", "centering", "CR-MGC", "DEMD"]
 
     # config_initial_swarm_positions = pd.read_excel("Configurations/swarm_positions_200.xlsx")
@@ -184,7 +331,7 @@ def draw_spatial_coverage():
     plt.plot(num_destroyed, coverage_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]], marker=marklist[0], linewidth=2)
     plt.legend(loc='upper right')
 
-    plt.savefig('./res2.png', dpi=600, bbox_inches='tight')
+    plt.savefig('./Figs/fig10b.png', dpi=600, bbox_inches='tight')
     plt.show()
 
     ratio = []
@@ -194,12 +341,13 @@ def draw_spatial_coverage():
     print(ratio, np.mean(ratio))
 
 
+# draw Fig.10c and Fig.10d
 def draw_degree_distribution():
 
     num_destroyed = [100, 150]
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
 
-    methods = ["DD-GCN", "DF-scaled", "CEN", "CR-MGC", "DEMD"]
+    methods = ["MDSG-GC", "MDSG-APF", "CEN", "CR-MGC", "DEMD"]
     method_labels = ["MDSG-GC", "MDSG-APF", "centering", "CR-MGC", "DEMD"]
 
     for dnum in num_destroyed:
@@ -230,150 +378,12 @@ def draw_degree_distribution():
         plt.ylabel(f'Cumulative Degree Distribution $P_d$', fontdict={'family':'serif', 'size':14})
         plt.ylim(0, 1.03)
         plt.legend(loc='lower right')
-        plt.savefig(f'./res_{dnum}.png', dpi=600, bbox_inches='tight')
+        n = 'fig10c' if dnum==100 else 'fig10d'
+        plt.savefig(f'./Figs/{n}.png', dpi=600, bbox_inches='tight')
         plt.show()
 
 
-def draw_batch():
-    plt.figure()
-    # tips = sns.load_dataset('tips')
-    # sns.boxplot(x='day', y='tip', hue='sex', data=tips)
-    # print(tips)
-    methods = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9', 'batch']
-    methods_label = ['k=1', 'k=2', 'k=3', 'k=4', 'k=5', 'k=6', 'k=7', 'k=8', 'k=9', 'batch\nprocessing']
-    # methods = ['k1', 'k2']
-    variable = [50, 100, 150]
-
-    # positions = [[i for i in range(1, 4*len(methods), 4)], [i for i in range(2, 4*len(methods), 4)], [i for i in range(3, 4*len(methods), 4)]]
-    positions = [[i for i in range(k, (len(variable)+1)*len(methods), len(variable)+1)] for k in range(1, len(variable)+1)]
-    position_tick = [i for i in range(2, (len(variable)+1)*len(methods), len(variable)+1)]
-
-    df = {'d50':[], 'd100':[], 'd150':[]}
-
-    for dnum in variable:
-        step_list = []
-
-        for m in methods:
-            with open(f'./Logs/batch/DD-GCN_d{dnum}_{m}.txt', 'r') as f:
-                    data = f.read().split('\n')
-
-            step = data[4].replace(' ','').strip('[').strip(']')
-            step = [min(float(s)/10, 49.9) for s in step.split(',')]
-            step_list.append(step)
-
-        df[f'd{dnum}'] = deepcopy(step_list)
-
-    # print(df)
-    handles = []
-    for i, var in enumerate(variable):
-        bp = plt.boxplot(df[f'd{var}'], positions=positions[i], patch_artist=True)
-        handles.append(bp['boxes'][0])
-
-        for patch in bp['boxes']:
-            patch.set_facecolor(mcolors.TABLEAU_COLORS[colors[i+2]])
-
-    plt.xticks(position_tick, methods_label)
-    plt.legend(handles=handles, labels=[f'$N_D=${var}' for var in variable], loc='upper right')
-    plt.grid(axis='y', linestyle='--')
-    
-    # plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
-    plt.ylabel('Recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
-    plt.savefig('./batch.png', dpi=600, bbox_inches='tight')
-    plt.show()
-
-
-def draw_loss_curve():
-
-    file_loss = ['loss_d50_setup', 'loss_d100_setup', 'loss_d150_setup', 'loss_d50', 'loss_d100', 'loss_d150']
-    loss_label = ['$N_D=50$', '$N_D=100$', '$N_D=150$', '$N_D=50$', '$N_D=100$', '$N_D=150$']
-
-    loss_curve_list = []
-    loss_std_list = []
-    step_range = range(1000)
-
-    for k in range(len(file_loss)):
-        with open(f'./Logs/loss/{file_loss[k]}.txt', 'r') as f:
-            data = f.read()
-
-        data = data.split('\n')[:-1]
-
-        for i in range(len(data)):
-            data[i] = [float(d) for d in data[i].replace(' ','').strip('[').strip(']').split(',')]
-
-        loss = np.array(data)
-        # print(loss)
-        # loss = loss[:5]
-        loss_mean = np.mean(loss, axis=0)
-        loss_curve_list.append(loss_mean)
-
-        loss_std = 1.96*np.std(loss, ddof=1)/np.sqrt(len(loss))
-        loss_std_list.append(loss_std)
-
-
-    plt.figure()
-    for k in range(len(file_loss)):
-        plt.plot(step_range, loss_curve_list[k], label=loss_label[k], c=colors[k], linewidth=2)
-        plt.fill_between(step_range, loss_curve_list[k]-loss_std_list[k], loss_curve_list[k]+loss_std_list[k], facecolor=colors[k], alpha=0.2)
-
-    plt.xlim(0,100)
-    # plt.ylim(100,1100)
-    plt.grid(linestyle='--')
-    plt.xlabel('Training Episode', fontdict={'family':'serif', 'size':14})
-    plt.ylabel('Loss Curve', fontdict={'family':'serif', 'size':14})
-    plt.legend(loc='upper right', ncol=2, title='   pre-trained              random    \n  initialization           initialization  ')
-    plt.savefig('./loss.png', dpi=600, bbox_inches='tight')
-    plt.show()
-       
-
-def draw_khop():
-    khop = [i+1 for i in range(8)]
-    num_destroyed = [i for i in range(10, 200, 10)]
-    # num_destroyed = [50, 100, 150]
-
-    khop_step = []
-    khop_count = [0 for _ in range(8)]
-
-    methods = "MDSG-APF"
-    khop_labels = [f'$N_D$={i}' for i in num_destroyed]
-
-    for dnum in num_destroyed:
-        khop_step_dnum = []
-        
-        with open(f'./Logs/khop/{methods}_d{dnum}.txt', 'r') as f:
-            data = f.read().split('\n')
-
-        step_list = [d.replace(' ','').strip('[').strip(']') for d in data if len(d) > 0]
-        for step in step_list:
-            s = [float(s)/10 for s in step.split(',')]
-            khop_step_dnum.append(s)
-
-            index = np.argwhere(s == np.min(s)).flatten()
-            for i in index:
-                khop_count[i] += 1/len(index)
-
-        # print(khop_step_dnum)
-        khop_step.append(np.mean(khop_step_dnum, axis=0))
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.bar(khop, khop_count, label='distribution of $k^*$', width=0.5)
-    ax1.set_xlabel('Value of $k$', fontdict={'family':'serif', 'size':14})
-    ax1.set_ylabel('Distribution of $k^*$', fontdict={'family':'serif', 'size':14})
-
-    ax2 = ax1.twinx()
-    ax2.plot(khop, np.mean(khop_step, axis=0), c='r', marker='^', label='recovery time $T_{rc}$', linewidth=2)
-    ax2.set_ylabel('Average recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
-
-    # plt.xlim(8,192)
-    # plt.ylim(-2,54)
-    ax1.grid(axis='y', linestyle='--')
-    fig.legend(loc='upper right',bbox_to_anchor=(0.76,0.86))
-
-    plt.gcf().subplots_adjust(right=0.85)
-
-    plt.savefig('./khop.png', dpi=600, bbox_inches='tight')
-    plt.show()
-
+# draw Fig.11b
 def draw_method_case():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
@@ -384,7 +394,7 @@ def draw_method_case():
 
     linestyles = ['-', '-', '-.', '--', ':', '-.', '--', ':']
 
-    methods = ["DD-GCN", "DF-scaled", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    methods = ["MDSG-GC", "MDSG-APF", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
     method_labels = ["MDSG-GC", "MDSG-APF", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
 
     for m in methods:
@@ -418,15 +428,24 @@ def draw_method_case():
     plt.plot(time, num_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]])
     plt.plot(time, num_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]])
 
-    plt.savefig('./case2.png', dpi=600, bbox_inches='tight')
+    plt.savefig('./Figs/fig11b.png', dpi=600, bbox_inches='tight')
     plt.show()
 
 
 if __name__ == "__main__":
+    # Fig.7
+    # draw_khop()
+
+    # # Fig.8
+    # draw_batch()
+
+    # # Fig.9
+    # draw_loss_curve()
+
+    # Fig.10
     # draw_method_figs()
     # draw_spatial_coverage()
     # draw_degree_distribution()
-    # draw_khop()
-    # draw_batch()
-    # draw_loss_curve()
+
+    # Fig.11
     draw_method_case()

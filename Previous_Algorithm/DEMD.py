@@ -107,7 +107,7 @@ class DEMD:
             # D = Utils.make_D_matrix(A, len(A))
             # L = D - A
             # flag, num_ = Utils.check_number_of_clusters(L, len(L))
-            num = Utils.check_number_of_clusters_torch(final_positions, config_communication_range)
+            _, num = Utils.check_number_of_clusters_torch(final_positions, config_communication_range)
             # print(num_, num)
 
             # loss
@@ -148,7 +148,7 @@ class DEMD:
                 layer = gcn_network.gc8
 
             # compute the weighted loss
-            weighted_loss = 1000*(num-1) + loss_weights @ loss
+            weighted_loss = 1000*(num-1) + loss @ loss_weights
             # weighted_loss = 1000 * (num - 1) + loss_weights @ loss + torch.var(degree-degree_init)
             # print(weighted_loss.cpu().data.numpy())
             if weighted_loss.cpu().data.numpy() < best_loss:

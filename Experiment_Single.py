@@ -28,7 +28,7 @@ use_pretrained = True
                     8 for MDSG-GC (best algorithm)
 """
 # set this value to 7 to run the proposed algorithm
-config_algorithm_mode = 8
+config_algorithm_mode = 6
 algorithm_mode = {1: "HERO",
                   2: "CEN",
                   3: "SIDR",
@@ -76,7 +76,7 @@ break_CCN_flag = True
 num_connected_steps = 0
 count_connect = 0
 
-for step in range(500):
+for step in range(310):
     # destroy at time step 0
     if step == 0:
         print("=======================================")
@@ -227,14 +227,13 @@ if break_CCN_flag:
                 if frame <= 10:
                     ax.scatter(storage_positions[frame][i, 0], storage_positions[frame][i, 1], s=15, c='black', zorder=3)
                     
-        # ax.text(5, 5, 0, 'CLEC = %f' % 120, c='blue')
-        # ax.text(5, 100, 'time steps = %d' % (frame), c='b', zorder=5)
-        # ax.text(5, 60, 'number_of_clusters = %d' % num_cluster_list[frame], c='b', zorder=5)
+        ax.text(5, 100, 'time steps = %d' % (frame), c='b', zorder=5)
+        ax.text(5, 60, 'number_of_clusters = %d' % num_cluster_list[frame], c='b', zorder=5)
 
-        # if storage_connection_states[frame]:
-        #     ax.text(5, 20, 'Connected...', c='g')
-        # else:
-        #     ax.text(5, 20, 'Unconnected...', c='r')
+        if storage_connection_states[frame]:
+            ax.text(5, 20, 'Connected...', c='g')
+        else:
+            ax.text(5, 20, 'Unconnected...', c='r')
         # plt.set_zlabel('Height', fontdict={'size': 15, 'color': 'black'})
         # ax.ylabel('Ground Y', fontdict={'size': 15, 'color': 'black'})
         # ax.xlabel('Ground X', fontdict={'size': 15, 'color': 'black'})
@@ -250,7 +249,7 @@ if break_CCN_flag:
         fig = plt.figure()
         frame = np.linspace(0, num_connected_steps + 10, num_connected_steps + 11).astype(int)
         ani = animation.FuncAnimation(fig, update, frames=frame, interval=90, repeat_delay=10)
-        ani.save(f"Figs/one_off_destruct_d{config_num_destructed_UAVs}_{algorithm_mode[config_algorithm_mode]}_cha.gif", writer='pillow', bitrate=2048, dpi=500)
+        ani.save(f"Figs/gif/CNS_d{config_num_destructed_UAVs}_{algorithm_mode[config_algorithm_mode]}.gif", writer='pillow', bitrate=2048, dpi=500)
         plt.show()
 
     elif config_algorithm_mode in [7, 8]:
@@ -297,5 +296,5 @@ if break_CCN_flag:
         # plt.savefig('./case4.png', dpi=600, bbox_inches='tight')
         plt.show()
 
-    # with open(f'./Logs/case/{algorithm_mode[config_algorithm_mode]}.txt', 'w') as f:
-    #     print(num_cluster_list, file=f)
+    with open(f'./Logs/case/{algorithm_mode[config_algorithm_mode]}.txt', 'w') as f:
+        print(num_cluster_list, file=f)
