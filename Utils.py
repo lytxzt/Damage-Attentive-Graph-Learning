@@ -27,6 +27,13 @@ def make_D_matrix(A, num_of_agents):
     return deepcopy(D)
 
 
+def make_Ddot_matrix(A, num_of_agents):
+    D = np.zeros((num_of_agents, num_of_agents))
+    for i in range(num_of_agents):
+        D[i, i] = 1 / np.sum(A[i])
+    return deepcopy(D)
+
+
 def check_number_of_clusters(L, num_of_agents):
     e_vals, e_vecs = np.linalg.eig(L)
     eig_0_counter = 0

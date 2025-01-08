@@ -1,4 +1,5 @@
 from copy import deepcopy
+import time
 
 import Utils
 from Configurations import *
@@ -11,8 +12,7 @@ from Previous_Algorithm.Centering import centering_fly
 from Previous_Algorithm.SIDR import SIDR
 from Previous_Algorithm.HERO import HERO
 
-from MDSG_Algorithm.MDSG_GC_batch import MDSG_GC_batch
-from MDSG_Algorithm.MDSG_APF import mdsg_apf, mdsg_apf_khop
+from DAGL_Algorithm.DAGL_Framework import DAGL
 
 
 class Swarm:
@@ -39,7 +39,8 @@ class Swarm:
 
         self.khop = khop
         self.demd = DEMD()
-        self.mdsg_gc = MDSG_GC_batch(use_pretrained=True)
+
+        self.ddag = DAGL(use_pretrained=use_pretrained)
         
         self.cr_gcm = CR_MGC(use_meta=False)
         self.gcn_2017 = GCN_2017()
@@ -98,6 +99,8 @@ class Swarm:
         max_time = 0
         self.make_remain_positions()
         flag, num_cluster = Utils.check_if_a_connected_graph(deepcopy(self.remain_positions), len(self.remain_list))
+
+        time_start = time.time()
         if flag:
             # print("connected")
             return deepcopy(actions), max_time
@@ -176,22 +179,10 @@ class Swarm:
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
-            
-            
-            # proposed MDSG-APF algorithm
-            elif self.algorithm_mode == 7:
-                if self.if_once_gcn_network:
-                    for i in range(len(self.remain_list)):
-                        actions[self.remain_list[i]] = deepcopy(self.once_destroy_gcn_network_speed[self.remain_list[i]])
-                else:
-                    self.if_once_gcn_network = True
-                    # actions = mdsg_apf(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range, self.khop)
-                    actions = mdsg_apf_khop(deepcopy(self.true_positions), deepcopy(self.remain_list), config_dimension, config_communication_range, 8)
-                    self.once_destroy_gcn_network_speed = deepcopy(actions)
                     
             
-            # proposed MDSG-GC algorithm
-            elif self.algorithm_mode == 8:
+            # proposed DDAG algorithm
+            elif self.algorithm_mode == 7:
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
                         d = np.linalg.norm(self.true_positions[self.remain_list[i]] - self.best_final_positions[i])
@@ -203,14 +194,19 @@ class Swarm:
                     max_time = deepcopy(self.max_time)
                 else:
                     self.if_once_gcn_network = True
-                    actions, max_time, best_final_positions = self.mdsg_gc.mdsg_gc_batch(deepcopy(self.true_positions), deepcopy(self.remain_list))
+                    actions, max_time, best_final_positions = self.ddag.dagl(deepcopy(self.true_positions), deepcopy(self.remain_list))
                     self.once_destroy_gcn_network_speed = deepcopy(actions)
                     self.best_final_positions = deepcopy(best_final_positions)
                     self.max_time = deepcopy(max_time)
 
             else:
                 print("No such algorithm")
-        return deepcopy(actions), deepcopy(max_time)
+
+        time_end = time.time()
+        # with open("./time.txt", 'a') as f:
+        #     print(time_end - time_start, file=f)
+
+        return deepcopy(actions), deepcopy(max_time)#, deepcopy(time_end - time_start)
 
     def make_remain_positions(self):
         self.remain_positions = []

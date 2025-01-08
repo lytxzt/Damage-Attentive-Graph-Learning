@@ -28,6 +28,9 @@ config_width = 1000.0
 config_length = 1000.0
 config_height = 100.0
 
+config_space_range = np.array([config_width, config_length]) if config_dimension == 2 else np.array([config_width, config_length, config_height])
+config_central_point = config_space_range / 2
+
 config_constant_speed = 1
 
 # configurations on destroy

@@ -11,11 +11,11 @@ import Utils
 """
 Note: if true, it may take a little long time
 """
-config_draw_video = True
+config_draw_video = False
 show_degree = False
 
 # determine if use pre-trained model
-use_pretrained = True
+use_pretrained = False
 
 """
     algorithm mode: 1 for HERO
@@ -24,19 +24,17 @@ use_pretrained = True
                     4 for GCN-2017
                     5 for CR-MGC
                     6 for DEMD
-                    7 for MDSG-APF (no GCN)
-                    8 for MDSG-GC (best algorithm)
+                    7 for DAGL (best algorithm)
 """
 # set this value to 7 to run the proposed algorithm
-config_algorithm_mode = 6
+config_algorithm_mode = 7
 algorithm_mode = {1: "HERO",
                   2: "CEN",
                   3: "SIDR",
                   4: "GCN_2017",
                   5: "CR-MGC",
                   6: "DEMD",
-                  7: "MDSG-APF",
-                  8: "MDSG-GC"}
+                  7: "DAGL"}
 
 print("CNS issue Starts...")
 print("------------------------------")
@@ -76,7 +74,7 @@ break_CCN_flag = True
 num_connected_steps = 0
 count_connect = 0
 
-for step in range(310):
+for step in range(300):
     # destroy at time step 0
     if step == 0:
         print("=======================================")
@@ -111,7 +109,7 @@ for step in range(310):
             break_CCN_flag = False
             break
         
-        ## draw Fig11.a
+        # # draw Fig11.a
         # positions_with_clusters = Utils.split_the_positions_into_clusters(initial_remain_positions, num_cluster, A)
         
         # fig = plt.figure()
@@ -122,11 +120,13 @@ for step in range(310):
 
         # for i, pos in enumerate(positions_with_clusters):
         #     x, y = np.array(pos)[:,0], np.array(pos)[:,1]
-        #     plt.scatter(x, y, s=30, zorder=4)
+        #     plt.scatter(x, y, s=30, zorder=4, c='g')
         #     # plt.text(np.mean(pos, axis=0)[0], np.mean(pos, axis=0)[1], f'{i}')
-        #     plt.text(text_pos[i][0], text_pos[i][1], f'sub-net{i+1}', c='black')
+        #     plt.text(text_pos[i][0], text_pos[i][1], f'sub-net', c='darkred')
         #     dx, dy = arrow_start[i][0] - arrow_end[i][0], arrow_start[i][1] - arrow_end[i][1]
-        #     plt.arrow(arrow_end[i][0], arrow_end[i][1], dx, dy, width=2, head_width=16, ec='black', fc='black', zorder=3)
+        #     plt.arrow(arrow_end[i][0], arrow_end[i][1], dx, dy, width=2, head_width=16, ec='darkred', fc='darkred', zorder=3)
+        
+        # plt.scatter(x, y, s=30, c='g', zorder=4, label='remaining UAVs')
 
         # for pos in destroy_positions:
         #     plt.scatter(pos[0], pos[1], s=15, c='black', zorder=2)
@@ -141,8 +141,10 @@ for step in range(310):
         # plt.plot(x, y, c='lightsteelblue', linewidth=2, zorder=1, label='communication links')
 
         # plt.legend(loc='upper left')
-        # plt.xlabel('Ground X', fontdict={'family':'serif', 'size':14})
-        # plt.ylabel('Ground Y', fontdict={'family':'serif', 'size':14})
+        # # plt.xlabel('Ground X', fontdict={'family':'serif', 'size':14})
+        # # plt.ylabel('Ground Y', fontdict={'family':'serif', 'size':14})
+        # plt.xticks([])
+        # plt.yticks([])
         # plt.savefig('./case1.png', dpi=600, bbox_inches='tight')
         # plt.show()
 
@@ -252,7 +254,8 @@ if break_CCN_flag:
         ani.save(f"Figs/gif/CNS_d{config_num_destructed_UAVs}_{algorithm_mode[config_algorithm_mode]}.gif", writer='pillow', bitrate=2048, dpi=500)
         plt.show()
 
-    elif config_algorithm_mode in [7, 8]:
+    # elif config_algorithm_mode in [7, 8]:
+    else:
         ## draw Fig11.c and Fig11.d
         fig = plt.figure()
         frame = num_connected_steps
@@ -291,10 +294,20 @@ if break_CCN_flag:
 
         plt.xlabel('Ground X', fontdict={'family':'serif', 'size':14})
         plt.ylabel('Ground Y', fontdict={'family':'serif', 'size':14})
-        plt.legend()
+        
+        # plt.xticks([])
+        # plt.yticks([])
+        plt.legend(loc='upper left')
 
-        # plt.savefig('./case4.png', dpi=600, bbox_inches='tight')
-        plt.show()
+        # rect1 = plt.Rectangle((480,670), 850-480, 910-670, fill=False, edgecolor='darkred', linewidth=2, zorder=5)
+        # rect2 = plt.Rectangle((800,20), 170, 210, fill=False, edgecolor='darkred', linewidth=2, zorder=5)
+        # rect3 = plt.Rectangle((150,740), 140, 220, fill=False, edgecolor='darkred', linewidth=2, zorder=5)
+        # ax.add_patch(rect1)
+        # ax.add_patch(rect2)
+        # ax.add_patch(rect3)
+
+        # plt.savefig('./Figs/case6.png', dpi=600, bbox_inches='tight')
+        # plt.show()
 
     with open(f'./Logs/case/{algorithm_mode[config_algorithm_mode]}.txt', 'w') as f:
         print(num_cluster_list, file=f)

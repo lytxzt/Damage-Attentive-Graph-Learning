@@ -2,24 +2,21 @@
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import time
 
 from Environment import Environment
 from Swarm import Swarm
 from Configurations import *
 import Utils
 
-# determine if draw the video
-"""
-Note: if true, it may take a little long time
-"""
-config_draw_video = False
 max_step = 500
 
-meta_param_use = False
+use_pretrained = True
 draw = False
 
-for dnum in range(10,200,10):
-    for mode in [7, 8]:
+for dnum in range(10, 200, 10):
+# for dnum in [150]:
+    for mode in [7]:
         config_algorithm_mode = mode
         algorithm_mode = {1: "HERO",
                           2: "CEN",
@@ -27,8 +24,7 @@ for dnum in range(10,200,10):
                           4: "GCN_2017",
                           5: "CR-MGC",
                           6: "DEMD",
-                          7: "MDSG-APF",
-                          8: "MDSG-GC"}
+                          7: "DAGL"}
 
         print("CNS issue Starts...")
         print("------------------------------")
@@ -57,7 +53,7 @@ for dnum in range(10,200,10):
         while len(storage_random_seed) < max_case and case < len(seed):
             environment = Environment()
             
-            swarm = Swarm(algorithm_mode=config_algorithm_mode, meta_param_use=meta_param_use)
+            swarm = Swarm(algorithm_mode=config_algorithm_mode, use_pretrained=use_pretrained)
             num_cluster_list = []
 
             environment_positions = environment.reset()
@@ -106,7 +102,12 @@ for dnum in range(10,200,10):
             positions_with_clusters = Utils.split_the_positions_into_clusters(initial_remain_positions, num_cluster, A)
 
             for step in range(max_step):
+
                 actions, max_time = swarm.take_actions()
+                # actions, max_time, time_consum = swarm.take_actions()
+                # with open(f"./Logs/time/{algorithm_mode[config_algorithm_mode]}.txt", 'a') as f:
+                #     print(time_consum, file=f)
+
                 environment_next_positions = environment.next_state(deepcopy(actions))
                 swarm.update_true_positions(environment_next_positions)
 
@@ -172,12 +173,12 @@ for dnum in range(10,200,10):
                 plt.ylim(0, 1000)
                 plt.show()
 
-        with open(f'./Logs/damage/d{dnum}/{algorithm_mode[config_algorithm_mode]}_d{config_num_destructed_UAVs}.txt', 'w') as f:
-            print('case:\n', storage_random_seed, file=f)
-            print('\nconnect_step:\n', storage_connect_step, file=f)
-            print('\navg_connect_step:\n', np.mean(np.array(storage_connect_step)), file=f)
-            print('\ndegree_distribution:\n', storage_node_degree, file=f)
-            for i in range(len(storage_random_seed)):
-                print('\n=======================================', file=f)
-                print(f'case {storage_random_seed[i]} -- step {storage_connect_step[i]} -- connected', file=f)
-                print('final positions:\n', storage_connect_positons[i], file=f)
+        # with open(f'./Logs/damage/d{dnum}/{algorithm_mode[config_algorithm_mode]}_resPre_d{config_num_destructed_UAVs}.txt', 'w') as f:
+        #     print('case:\n', storage_random_seed, file=f)
+        #     print('\nconnect_step:\n', storage_connect_step, file=f)
+        #     print('\navg_connect_step:\n', np.mean(np.array(storage_connect_step)), file=f)
+        #     print('\ndegree_distribution:\n', storage_node_degree, file=f)
+        #     for i in range(len(storage_random_seed)):
+        #         print('\n=======================================', file=f)
+        #         print(f'case {storage_random_seed[i]} -- step {storage_connect_step[i]} -- connected', file=f)
+        #         print('final positions:\n', storage_connect_positons[i], file=f)

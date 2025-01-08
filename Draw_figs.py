@@ -9,153 +9,59 @@ from copy import deepcopy
 colors = list(mcolors.TABLEAU_COLORS.keys())
 plt.rcParams['axes.axisbelow'] = True
 
+# draw Fig.4
+def draw_convergence():
 
-# draw Fig.7
-def draw_khop():
-    khop = [i+1 for i in range(8)]
-    num_destroyed = [i for i in range(10, 200, 10)]
-    # num_destroyed = [50, 100, 150]
+    # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
+    num_destroyed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190]
 
-    khop_step = []
-    khop_count = [0 for _ in range(8)]
+    convergence_methods = []
 
-    methods = "MDSG-APF"
-    khop_labels = [f'$N_D$={i}' for i in num_destroyed]
+    marklist = ['o', '^', 's', 'd', 'h', 'v', '>', '8']
+    methods = ["DAGL", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    method_labels = ["DAGL", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
 
-    for dnum in num_destroyed:
-        khop_step_dnum = []
+    for m in methods:
+        convergence_m = []
         
-        with open(f'./Logs/khop/{methods}_d{dnum}.txt', 'r') as f:
-            data = f.read().split('\n')
-
-        step_list = [d.replace(' ','').strip('[').strip(']') for d in data if len(d) > 0]
-        for step in step_list:
-            s = [float(s)/10 for s in step.split(',')]
-            khop_step_dnum.append(s)
-
-            index = np.argwhere(s == np.min(s)).flatten()
-            for i in index:
-                khop_count[i] += 1/len(index)
-
-        # print(khop_step_dnum)
-        khop_step.append(np.mean(khop_step_dnum, axis=0))
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.bar(khop, khop_count, label='distribution of $k^*$', width=0.5)
-    ax1.set_xlabel('Value of $k$', fontdict={'family':'serif', 'size':14})
-    ax1.set_ylabel('Distribution of $k^*$', fontdict={'family':'serif', 'size':14})
-
-    ax2 = ax1.twinx()
-    ax2.plot(khop, np.mean(khop_step, axis=0), c='r', marker='^', label='recovery time $T_{rc}$', linewidth=2)
-    ax2.set_ylabel('Average recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
-
-    # plt.xlim(8,192)
-    # plt.ylim(-2,54)
-    ax1.grid(axis='y', linestyle='--')
-    fig.legend(loc='upper right',bbox_to_anchor=(0.76,0.86))
-
-    plt.gcf().subplots_adjust(right=0.85)
-
-    plt.savefig('./Figs/fig7.png', dpi=600, bbox_inches='tight')
-    plt.show()
-
-
-# draw Fig.8
-def draw_batch():
-    plt.figure()
-    # tips = sns.load_dataset('tips')
-    # sns.boxplot(x='day', y='tip', hue='sex', data=tips)
-    # print(tips)
-    methods = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9', 'batch']
-    methods_label = ['k=1', 'k=2', 'k=3', 'k=4', 'k=5', 'k=6', 'k=7', 'k=8', 'k=9', 'batch\nprocessing']
-    # methods = ['k1', 'k2']
-    variable = [50, 100, 150]
-
-    # positions = [[i for i in range(1, 4*len(methods), 4)], [i for i in range(2, 4*len(methods), 4)], [i for i in range(3, 4*len(methods), 4)]]
-    positions = [[i for i in range(k, (len(variable)+1)*len(methods), len(variable)+1)] for k in range(1, len(variable)+1)]
-    position_tick = [i for i in range(2, (len(variable)+1)*len(methods), len(variable)+1)]
-
-    df = {'d50':[], 'd100':[], 'd150':[]}
-
-    for dnum in variable:
-        step_list = []
-
-        for m in methods:
-            with open(f'./Logs/batch/MDSG-GC_d{dnum}_{m}.txt', 'r') as f:
+        for dnum in num_destroyed:
+            try:
+                with open(f'./Logs/damage/d{dnum}/{m}_d{dnum}.txt', 'r') as f:
                     data = f.read().split('\n')
 
-            step = data[4].replace(' ','').strip('[').strip(']')
-            step = [min(float(s)/10, 49.9) for s in step.split(',')]
-            step_list.append(step)
+                # print(data[7].replace(' ',''))
+                step_list = data[4].replace(' ','').strip('[').strip(']')
+                step_list = [float(s) for s in step_list.split(',')]
 
-        df[f'd{dnum}'] = deepcopy(step_list)
+                convergent_list = [s for s in step_list if s < 499]
 
-    # print(df)
-    handles = []
-    for i, var in enumerate(variable):
-        bp = plt.boxplot(df[f'd{var}'], positions=positions[i], patch_artist=True)
-        handles.append(bp['boxes'][0])
+                convergence_m.append(len(convergent_list)/len(step_list))
+            except:
+                convergence_m.append(0)
 
-        for patch in bp['boxes']:
-            patch.set_facecolor(mcolors.TABLEAU_COLORS[colors[i+2]])
-
-    plt.xticks(position_tick, methods_label)
-    plt.legend(handles=handles, labels=[f'$N_D=${var}' for var in variable], loc='upper right')
-    plt.grid(axis='y', linestyle='--')
-    
-    # plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
-    plt.ylabel('Recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
-    plt.savefig('./Figs/fig8.png', dpi=600, bbox_inches='tight')
-    plt.show()
-
-
-# draw Fig.9
-def draw_loss_curve():
-
-    file_loss = ['loss_d50_setup', 'loss_d100_setup', 'loss_d150_setup', 'loss_d50', 'loss_d100', 'loss_d150']
-    loss_label = ['$N_D=50$', '$N_D=100$', '$N_D=150$', '$N_D=50$', '$N_D=100$', '$N_D=150$']
-
-    loss_curve_list = []
-    loss_std_list = []
-    step_range = range(1000)
-
-    for k in range(len(file_loss)):
-        with open(f'./Logs/loss/{file_loss[k]}.txt', 'r') as f:
-            data = f.read()
-
-        data = data.split('\n')[:-1]
-
-        for i in range(len(data)):
-            data[i] = [float(d) for d in data[i].replace(' ','').strip('[').strip(']').split(',')]
-
-        loss = np.array(data)
-        # print(loss)
-        # loss = loss[:5]
-        loss_mean = np.mean(loss, axis=0)
-        loss_curve_list.append(loss_mean)
-
-        loss_std = 1.96*np.std(loss, ddof=1)/np.sqrt(len(loss))
-        loss_std_list.append(loss_std)
-
+        # print(step_std)
+        convergence_methods.append(convergence_m)
 
     plt.figure()
-    for k in range(len(file_loss)):
-        plt.plot(step_range, loss_curve_list[k], label=loss_label[k], c=colors[k], linewidth=2)
-        plt.fill_between(step_range, loss_curve_list[k]-loss_std_list[k], loss_curve_list[k]+loss_std_list[k], facecolor=colors[k], alpha=0.2)
+    
+    for i, s in enumerate(convergence_methods):
+        plt.plot(num_destroyed, s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i], linewidth=2)
 
-    plt.xlim(0,100)
-    # plt.ylim(100,1100)
+    plt.xlim(8,192)
+    plt.ylim(-0.03, 1.1)
     plt.grid(linestyle='--')
-    plt.xlabel('Training Episode', fontdict={'family':'serif', 'size':14})
-    plt.ylabel('Loss Curve', fontdict={'family':'serif', 'size':14})
-    plt.legend(loc='upper right', ncol=2, title='   pre-trained              random    \n  initialization           initialization  ')
-    plt.savefig('./Figs/fig9.png', dpi=600, bbox_inches='tight')
+    plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Convergent ratio', fontdict={'family':'serif', 'size':14})
+    plt.legend(loc='lower left')
+    # plt.plot(num_destroyed, step_methods[2], c=mcolors.TABLEAU_COLORS[colors[2]],marker=marklist[2])
+    plt.plot(num_destroyed, convergence_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]],marker=marklist[0], linewidth=2)
+
+    plt.savefig('./Figs/result4.png', dpi=600, bbox_inches='tight')
     plt.show()
 
 
-# draw Fig.10a
-def draw_method_figs():
+# draw Fig.5
+def draw_recovery_time():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
     num_destroyed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190]
@@ -164,8 +70,8 @@ def draw_method_figs():
     step_methods_std = []
 
     marklist = ['o', '^', 's', 'd', 'h', 'v', '>', '8']
-    methods = ["MDSG-GC", "MDSG-APF", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
-    method_labels = ["MDSG-GC", "MDSG-APF", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
+    methods = ["DAGL", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    method_labels = ["DAGL", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
 
     for m in methods:
         step_m = []
@@ -181,7 +87,7 @@ def draw_method_figs():
                 step_list = [min(float(s)/10, 49.9) for s in step_list.split(',')]
 
                 step_m.append(float(data[7].replace(' ',''))/10)
-                step_std.append(1.96*np.std(step_list, ddof=1)/np.sqrt(len(step_list)))
+                step_std.append(2.58*np.std(step_list, ddof=1)/np.sqrt(len(step_list)))
             except:
                 step_m.append(49.9)
                 step_std.append(0)
@@ -193,7 +99,7 @@ def draw_method_figs():
     plt.figure()
     for i in reversed(range(len(step_methods))):
         # plt.fill_between(num_destroyed, np.array(step_methods[i])-np.array(step_methods_std[i]), np.array(step_methods[i])+np.array(step_methods_std[i]), color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.2)
-        plt.fill_between(num_destroyed, [max(s - s_std, 0) for s, s_std in zip(step_methods[i], step_methods_std[i])], [min(s + s_std, 49.9) for s, s_std in zip(step_methods[i], step_methods_std[i])], color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.2)
+        plt.fill_between(num_destroyed, [max(s - s_std, 0) for s, s_std in zip(step_methods[i], step_methods_std[i])], [min(s + s_std, 49.9) for s, s_std in zip(step_methods[i], step_methods_std[i])], color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.15)
 
     for i, s in enumerate(step_methods):
         plt.plot(num_destroyed, s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i], linewidth=2)
@@ -205,40 +111,42 @@ def draw_method_figs():
     plt.ylabel('Average recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
     plt.legend(loc='upper left')
     # plt.plot(num_destroyed, step_methods[2], c=mcolors.TABLEAU_COLORS[colors[2]],marker=marklist[2])
-    plt.plot(num_destroyed, step_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]],marker=marklist[1], linewidth=2)
     plt.plot(num_destroyed, step_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]],marker=marklist[0], linewidth=2)
 
-    plt.savefig('./Figs/fig10a.png', dpi=600, bbox_inches='tight')
+    plt.savefig('./Figs/result1.png', dpi=600, bbox_inches='tight')
     plt.show()
 
-    ratio = []
+    ratio1, ratio2 = [], []
     for i in range(len(num_destroyed)):
-        ratio.append((step_methods[7][i] - step_methods[1][i])/step_methods[7][i])
+        ratio1.append((step_methods[5][i] - step_methods[0][i])/step_methods[5][i])
+        ratio2.append((step_methods[6][i] - step_methods[0][i])/step_methods[6][i])
 
-    print(ratio, sum(ratio)/len(num_destroyed))
+    print(ratio1, sum(ratio1)/len(num_destroyed))
+    print(ratio2, sum(ratio2)/len(num_destroyed))
 
 
-# draw Fig.10b
+# draw Fig.6
 def draw_spatial_coverage():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
     num_destroyed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190]
+    # num_destroyed = [50, 100, 150]
 
     coverage_methods = []
     coverage_methods_std = []
 
-    # coverage_methods = [[0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5472358273237179, 0.5137605794270833, 0.42624472656250006, 0.3349951171875001, 0.23151835937499998, 0.1789016927083333, 0.10261953124999998]]
-    # scaled
-    # coverage_methods = [[0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5873599008413461, 0.5707125, 0.5360072916666666, 0.4860467447916667, 0.39812076822916664, 0.2877386067708333, 0.17947519531249997]]
-    # coverage_methods = [[0.5968694911858974, 0.5925361328125, 0.5809194010416667, 0.5435434895833333, 0.45511796875, 0.3193609375, 0.1830646484375], [0.5790114182692307, 0.54329453125, 0.47705390624999994, 0.4067041666666667, 0.31975442708333335, 0.24608235677083334, 0.15416647135416667], [0.551693835136218, 0.5039954427083333, 0.45265026041666667, 0.36421516927083336, 0.27528483072916665, 0.20392389322916663, 0.13745338541666668], [0.5472358273237179, 0.5137605794270833, 0.42624472656250006, 0.34188515625, 0.23151835937499998, 0.17538046875, 0.10261953124999998], [0.5873599008413461, 0.5707125, 0.5360072916666666, 0.4860467447916667, 0.39812076822916664, 0.2877386067708333, 0.17947519531249997]]
-    # coverage_methods = [[0.5983902037377451, 0.5976621547965116, 0.5968040364583334, 0.5959264322916668, 0.5943787760416668, 0.5924305989583334, 0.5851134114583334, 0.5772955078124999, 0.570451953125, 0.554644140625, 0.5338967447916667, 0.5003774739583333, 0.440012890625], [0.5967989813112746, 0.5957642169331395, 0.5915326822916667, 0.5891501302083334, 0.5797401692708334, 0.5751291666666668, 0.5582727213541666, 0.5415691406250001, 0.5158234375, 0.4898411458333334, 0.4528272135416666, 0.4151361328125, 0.3673423828125], [0.5957640165441177, 0.59012574188469, 0.5782962890625, 0.5684613932291667, 0.5511035156249999, 0.5230518229166667, 0.5044772786458334, 0.4802637369791667, 0.44317441406249997, 0.40146946614583334, 0.3644350911458333, 0.33322597656249997, 0.28766243489583326], [0.5920214843750001, 0.5881481649709303, 0.5580357421875, 0.5394173177083332, 0.5403128906250001, 0.5121793619791667, 0.4902163411458333, 0.43920748697916673, 0.42078157552083334, 0.38176901041666667, 0.3311368489583333, 0.29600944010416663, 0.25664322916666665], [0.5742078354779412, 0.5636737675629845, 0.5404018880208333, 0.5475331380208333, 0.5159981119791667, 0.49667727864583333, 0.4658399088541667, 0.45294798177083323, 0.4053949869791667, 0.34687076822916674, 0.30522858072916664, 0.2649919921875, 0.2236537109375]]
-    # coverage_methods = [[967.5024767801857, 1020.0100775193797, 1078.46, 1144.17875, 1217.2877333333336, 1299.962, 1382.6680000000001, 1477.8765000000003, 1593.1167272727273, 1703.8668], [964.9297213622291, 1016.770930232558, 1068.9343529411767, 1131.1682500000002, 1187.3078666666668, 1261.9977142857142, 1319.2413846153845, 1386.417, 1440.5541818181819, 1440.3568], [963.2563467492259, 1007.1479328165376, 1045.015411764706, 1091.445875, 1128.6599999999999, 1147.7251428571428, 1192.1186153846154, 1229.4751666666666, 1237.6652727272726, 1233.3142], [957.2052631578947, 1003.7728682170542, 1008.403411764706, 1035.6812499999999, 1106.5608000000002, 1123.8678571428572, 1158.4189230769232, 1124.3711666666668, 1175.1281818181817, 1172.7944], [928.4034055727554, 962.00322997416, 976.538, 1051.263625, 1056.7641333333333, 1089.851857142857, 1100.8155384615386, 1159.5468333333333, 1132.1576363636366, 1065.587]]
-    coverage_methods = [[0.9871402606376765, 0.9771705650808795, 0.9665405774321641, 0.9632182743216411, 0.9495224602911978, 0.9431990403706153, 0.9074623593646591, 0.8847019771674387, 0.8646366230972865, 0.8269932991396426, 0.7830493050959629, 0.7252132279947054, 0.6333607710125744, 0.5528778540701522, 0.4817411896095301, 0.3911691346790204, 0.30570586532097943, 0.24395433487756446, 0.1653644109861019], [0.9714100274457894, 0.9647603619965215, 0.9393530774321639, 0.9345551373262737, 0.9013763649900726, 0.890968108868299, 0.8544889559894108, 0.8107023494374586, 0.761996401389808, 0.7098436465916612, 0.6526422898742554, 0.5979889146260754, 0.5300883107213765, 0.45416177200529445, 0.4138782263401721, 0.3438922898742554, 0.2824071393117141, 0.22980166280608863, 0.15788757445400395], [0.9059835714563786, 0.8856048858756712, 0.8342860688285902, 0.8477827183984116, 0.7823039377895431, 0.7529134265387161, 0.7003571724023824, 0.6717879301786895, 0.5994525562541362, 0.5058758686300462, 0.4433258189940436, 0.38552903706154856, 0.3272003226340172, 0.3016046906022501, 0.25274673229649236, 0.21181192091330242, 0.1700823130377233, 0.1402953342157511, 0.1130906684315023], [0.9545131048779536, 0.9367814322872577, 0.8631918017868959, 0.8301327763070813, 0.828414336532098, 0.776165205162144, 0.7337140138980806, 0.6449311300463267, 0.6180329665784249, 0.5537686135009926, 0.47980207643944406, 0.429423395102581, 0.3743561796823295, 0.34711035737921897, 0.30579686465916606, 0.2506090751158173, 0.22039109033752477, 0.18017496690933155, 0.13646426207809395], [0.9623824794643203, 0.9323341522632477, 0.9036149487094639, 0.8786343894771674, 0.843946475843812, 0.7830917025148907, 0.7477179847782923, 0.7046461366644604, 0.6474977250165453, 0.5824030029781601, 0.5291241313699536, 0.4829181833223031, 0.4181200363997351, 0.37784889973527463, 0.3379121856386498, 0.28597927696889475, 0.24378805426869615, 0.2067397418927862, 0.1414961118464593]]
-    coverage_methods_std = [[0.005164016935172642, 0.006280623147680463, 0.006349164613790299, 0.007037124437072787, 0.00778364171335366, 0.008006848821802047, 0.011482439628413967, 0.010769280145376326, 0.010680714133991945, 0.0115880177425518, 0.011562086753975, 0.015499752619390307, 0.018263029875359358, 0.02011443882565077, 0.019971947877466572, 0.017024216945770124, 0.015708242743491727, 0.00916888193361664, 0.007449639073074311], [0.012071340352742863, 0.00900042365037345, 0.01211444014990316, 0.014825775790554975, 0.020234959431160795, 0.0226474705205137, 0.030545807617139438, 0.030119152088311243, 0.032789429870032916, 0.023533945890900045, 0.023816684403525752, 0.023113108642492136, 0.023088513417324923, 0.01751067425257052, 0.01882494270803785, 0.01633170734394814, 0.013765080229907335, 0.007205807162169809, 0.00464466101052132], [0.052566956021553826, 0.04122931645896945, 0.04358943564797798, 0.04155485361042807, 0.04836445208107116, 0.0586140009765723, 0.06470660722025666, 0.05947320303122341, 0.06435666272505393, 0.05404577161445782, 0.045292454772044986, 0.04574169291278129, 0.03934527420997144, 0.03565263874957842, 0.02960817491228032, 0.02441588760806246, 0.014997221993624455, 0.00870894586880823, 0.005062800484226115], [0.028140383786482166, 0.021733873918608225, 0.03690258174335679, 0.0441331493345681, 0.043954593380992335, 0.048654435990514, 0.051441591696489083, 0.05119624869638891, 0.05393334489447707, 0.04126567704448232, 0.03690027183950489, 0.02946953692100325, 0.02341486943060018, 0.019444355682434116, 0.01965314172270739, 0.014903471296361118, 0.014845932558468063, 0.01206918756527795, 0.007266287090729348], [0.016600864539432242, 0.01726773389668875, 0.023384422993803552, 0.027503187057832435, 0.03586704816236548, 0.03407020905226816, 0.03460339454159637, 0.03242595020416412, 0.036443854392037636, 0.033148873838583566, 0.029926668069118402, 0.024407605997728322, 0.01992317567381207, 0.021233210716307672, 0.016303944071905403, 0.014916742425670631, 0.018312415548373637, 0.012005107991926807, 0.006923392813456899]]
+    marklist = ['o', '^', 's', 'd', 'h', 'v']
+    methods = ["DAGL", "CEN", "GCN_2017", "CR-MGC", "DEMD"]
+    method_labels = ["DAGL", "centering", "GCN", "CR-MGC", "DEMD"]
+    # coverage_methods = [[0.9871402606376765, 0.9771705650808795, 0.9665405774321641, 0.9632182743216411, 0.9495224602911978, 0.9431990403706153, 0.9074623593646591, 0.8847019771674387, 0.8646366230972865, 0.8269932991396426, 0.7830493050959629, 0.7252132279947054, 0.6333607710125744, 0.5528778540701522, 0.4817411896095301, 0.3928689609530112, 0.30761208583860195, 0.24395433487756446, 0.1665520557577763], [0.9059835714563786, 0.8856048858756712, 0.8342860688285902, 0.8477827183984116, 0.7823039377895431, 0.7529134265387161, 0.7117431353745998, 0.6825868376801414, 0.6185395640304433, 0.5133198381933846, 0.45598036275645265, 0.39612373841826604, 0.3443515667712139, 0.3168152749402928, 0.26416851602739333, 0.224819129414596, 0.18007897442564053, 0.1417351316043459, 0.11340412654141735], [0.9545131048779536, 0.9367814322872577, 0.8631918017868959, 0.8301327763070813, 0.828414336532098, 0.776165205162144, 0.7337140138980806, 0.6449311300463267, 0.6180329665784249, 0.5537686135009926, 0.48117398431907504, 0.42832113818393003, 0.37404167904752894, 0.34711035737921897, 0.30991953107765274, 0.2519312034873512, 0.2221585973692918, 0.18161201910626418, 0.13690163974822925], [0.9623824794643203, 0.9323341522632477, 0.9036149487094639, 0.8786343894771674, 0.843946475843812, 0.7830917025148907, 0.7477179847782923, 0.7046461366644604, 0.6474977250165453, 0.5824030029781601, 0.5291241313699536, 0.4829181833223031, 0.4175764446144936, 0.37784889973527463, 0.34101917570469614, 0.28597927696889475, 0.246602508475263, 0.2061263742757195, 0.14562437396032696]]
+    # coverage_methods_std = [[0.006797532496298682, 0.008267350878069183, 0.008357573828356618, 0.00926315359573867, 0.010245814092067573, 0.01053962753073943, 0.015114639919034714, 0.014175889170954553, 0.014059307380458786, 0.01525361519172635, 0.015219481543497703, 0.0204027355908301, 0.024040110754299567, 0.026477169474581116, 0.026289604859114163, 0.022429273515637473, 0.02163484056077292, 0.012069242545270887, 0.010427718221212481], [0.06919527884469841, 0.05427124309394958, 0.05737793059784858, 0.0546997562831145, 0.06366341141283857, 0.07715516455079414, 0.08159764067058617, 0.07466924735053682, 0.0806458510757664, 0.06991303035430686, 0.05738598877823359, 0.05949317386428292, 0.051284374184900304, 0.046660675748688284, 0.03944178429483349, 0.033435911783192794, 0.021205575854242775, 0.011623219986375681, 0.006751453904742066], [0.03704193375975714, 0.028608874852045517, 0.04857584739686761, 0.058093635348564134, 0.05785859740967359, 0.06404512492628885, 0.06771393192701114, 0.06739098042687929, 0.07099389276926064, 0.05431910549732877, 0.04944261554862727, 0.039484909128026976, 0.0314462751338029, 0.02559512125544899, 0.02558183811905448, 0.019717375316653216, 0.019655437253359796, 0.016664641347640202, 0.009378599633308563], [0.021852158424354687, 0.022729976251763765, 0.030781536389802633, 0.03620317480061617, 0.04721274707086885, 0.04484752007900604, 0.04554936628434625, 0.04268313853405277, 0.04797201241400873, 0.04363474209364572, 0.039393267152206875, 0.032128379323540346, 0.027182544616531832, 0.02794983859595602, 0.020318587482529217, 0.019635303805219502, 0.023459414753508344, 0.016047430651805538, 0.010223591116069571]]
+   
+    # marklist = ['o', '^', 's', 'd', 'h', 'v', '>', '8']
+    # methods = ["DAGL", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    # method_labels = ["DAGL", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
+    # coverage_methods = [[0.9895886604295768, 0.9842591826604895, 0.9808180053590739, 0.9727139863225235, 0.9685522832561216, 0.9612748180013234, 0.9476333967571143, 0.9373852167438781, 0.9105838434811382, 0.8791441925876902, 0.8297919424222369, 0.7375839675711449, 0.6616636333553937, 0.5565858702845796, 0.4793731386499007, 0.41029678193249497, 0.3354347286565188, 0.2604539626075446, 0.17052469391131697], [0.9059835714563786, 0.8856048858756712, 0.8342860688285902, 0.8477827183984116, 0.7823039377895431, 0.7529134265387161, 0.7117431353745998, 0.6825868376801414, 0.6185395640304433, 0.5133198381933846, 0.45598036275645265, 0.39612373841826604, 0.3443515667712139, 0.3168152749402928, 0.26416851602739333, 0.224819129414596, 0.18007897442564053, 0.1417351316043459, 0.11340412654141735], [0.9951915122435473, 0.9891685777168977, 0.9810745856913247, 0.9789395429890944, 0.970452699937302, 0.9632011085373924, 0.9550116851422897, 0.9509327432164127, 0.9469230848775644], [0.9885177965751157, 0.9830513732627397, 0.9760805627155247, 0.9700497443351924, 0.9600154423119347, 0.9529269332586674, 0.9426570346868064, 0.9336683978946061, 0.9227322194710056, 0.9001954417604234, 0.8830067599508364, 0.8549125324543094, 0.8154870237307363, 0.7746132528127067, 0.7243154367968232, 0.6048526086476946, 0.48730145598941094], [0.9614730943668003, 0.9384436612131191, 0.9201695896757114, 0.9003067091330244, 0.8570818166776968, 0.8325183771390752, 0.7953960539377894, 0.7367082881563567, 0.623842515993823, 0.5970910512828405, 0.5284535799966908, 0.46505080169664875, 0.4297000090732477, 0.40601431516104114, 0.3598925587359364, 0.3180884820837666, 0.2912340751158173, 0.2344525562541363, 0.1651982682550187], [0.9545131048779536, 0.9367814322872577, 0.8631918017868959, 0.8301327763070813, 0.828414336532098, 0.776165205162144, 0.7337140138980806, 0.6449311300463267, 0.6180329665784249, 0.5537686135009926, 0.48117398431907504, 0.42832113818393003, 0.37404167904752894, 0.34711035737921897, 0.30991953107765274, 0.2519312034873512, 0.2221585973692918, 0.18161201910626418, 0.13690163974822925], [0.9623824794643203, 0.9323341522632477, 0.9036149487094639, 0.8786343894771674, 0.843946475843812, 0.7830917025148907, 0.7477179847782923, 0.7046461366644604, 0.6474977250165453, 0.5824030029781601, 0.5291241313699536, 0.4829181833223031, 0.4175764446144936, 0.37784889973527463, 0.34101917570469614, 0.28597927696889475, 0.246602508475263, 0.2061263742757195, 0.14562437396032696]]
+    # coverage_methods_std = [[0.004224341504678732, 0.0049148952741099325, 0.0031868240727935047, 0.0037572008337043504, 0.004384367594206894, 0.005331461450275573, 0.0059481255903114085, 0.005868051764123798, 0.010794308653931347, 0.014739596705955654, 0.022736111107214182, 0.021444701639200137, 0.024215438432610613, 0.0247395889213454, 0.021359126155038162, 0.01875637707347786, 0.01421121950574465, 0.010514938062831726, 0.008484399745497723], [0.06919527884469841, 0.05427124309394958, 0.05737793059784858, 0.0546997562831145, 0.06366341141283857, 0.07715516455079414, 0.08159764067058617, 0.07466924735053682, 0.0806458510757664, 0.06991303035430686, 0.05738598877823359, 0.05949317386428292, 0.051284374184900304, 0.046660675748688284, 0.03944178429483349, 0.033435911783192794, 0.021205575854242775, 0.011623219986375681, 0.006751453904742066], [0.002099369756396745, 0.0031946496257410214, 0.0035325414247386515, 0.004066390130856861, 0.005846792277204222, 0.008355236493184908, 0.012392492226315974, 0.016382359135137487, 0.00789109472282445], [0.007664013024520238, 0.006173684176963762, 0.007567158843848262, 0.008065601446979357, 0.01122547286734605, 0.010725551940442453, 0.011289524165901168, 0.010549843891625974, 0.011937179787072857, 0.015503312764730928, 0.0170865795851273, 0.01770840861835493, 0.01976143173685207, 0.042853715510542026, 0.0327893824576617, 0.02319479926848095, 0.02519479926848095], [0.020535839273382355, 0.03174039854563653, 0.0267911060195562, 0.035857608623073016, 0.04221573284891425, 0.04127119113414001, 0.04364603058034682, 0.049814001064394854, 0.05546118304888963, 0.048488463641015424, 0.04222338685979505, 0.04737729367267548, 0.03907693642064012, 0.026196251654327398, 0.027873276766344896, 0.025414191184241146, 0.026791778549025053, 0.046035220880211815, 0.024234982686827795], [0.03704193375975714, 0.028608874852045517, 0.04857584739686761, 0.058093635348564134, 0.05785859740967359, 0.06404512492628885, 0.06771393192701114, 0.06739098042687929, 0.07099389276926064, 0.05431910549732877, 0.04944261554862727, 0.039484909128026976, 0.0314462751338029, 0.02559512125544899, 0.02558183811905448, 0.019717375316653216, 0.019655437253359796, 0.016664641347640202, 0.009378599633308563], [0.021852158424354687, 0.022729976251763765, 0.030781536389802633, 0.03620317480061617, 0.04721274707086885, 0.04484752007900604, 0.04554936628434625, 0.04268313853405277, 0.04797201241400873, 0.04363474209364572, 0.039393267152206875, 0.032128379323540346, 0.027182544616531832, 0.02794983859595602, 0.020318587482529217, 0.019635303805219502, 0.023459414753508344, 0.016047430651805538, 0.010223591116069571]]
 
-    marklist = ['o', '^', 's', 'd', 'v']
-    methods = ["MDSG-GC", "MDSG-APF", "CEN", "CR-MGC", "DEMD"]
-    method_labels = ["MDSG-GC", "MDSG-APF", "centering", "CR-MGC", "DEMD"]
 
     # config_initial_swarm_positions = pd.read_excel("Configurations/swarm_positions_200.xlsx")
     # config_initial_swarm_positions = config_initial_swarm_positions.values[:, 1:3]
@@ -272,6 +180,7 @@ def draw_spatial_coverage():
         for m in methods:
             coverage_m = []
             coverage_m_std = []
+
             for dnum in num_destroyed:
                 with open(f'./Logs/damage/d{dnum}/{m}_d{dnum}.txt', 'r') as f:
                     data = f.read().split('\n')
@@ -280,6 +189,11 @@ def draw_spatial_coverage():
                 coverage_d = []
 
                 for col in range(15, len(data), 5):
+                    step = data[col-2]
+                    # print(step, step.split(' ')[4])
+                    if step.split(' ')[4] == '499':
+                        continue
+
                     pos = eval(data[col].replace('array', 'np.array'))
 
                     plt.figure()
@@ -305,8 +219,9 @@ def draw_spatial_coverage():
                     coverage_d.append(np.sum(buf[:,:,1]==0)/(w*h*area))
                     # coverage_d.append(np.sum(buf[:,:,1]==0)/(200-dnum))
 
-                coverage_m.append(np.mean(coverage_d))
-                coverage_m_std.append(1.96*np.std(coverage_d, ddof=1)/np.sqrt(len(coverage_d)))
+                if len(coverage_d) > 0:
+                    coverage_m.append(np.mean(coverage_d))
+                    coverage_m_std.append(2.58*np.std(coverage_d, ddof=1)/np.sqrt(len(coverage_d)))
 
             # print(coverage_m)
             coverage_methods.append(coverage_m)
@@ -317,38 +232,37 @@ def draw_spatial_coverage():
   
     plt.figure()
     for i in reversed(range(len(coverage_methods))):
-        plt.fill_between(num_destroyed, [max(s - s_std, 0) for s, s_std in zip(coverage_methods[i], coverage_methods_std[i])], [min(s + s_std, 49.9) for s, s_std in zip(coverage_methods[i], coverage_methods_std[i])], color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.2)
+        plt.fill_between(num_destroyed[:len(coverage_methods[i])], [max(s - s_std, 0) for s, s_std in zip(coverage_methods[i], coverage_methods_std[i])], [min(s + s_std, 49.9) for s, s_std in zip(coverage_methods[i], coverage_methods_std[i])], color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.15)
 
     for i, s in enumerate(coverage_methods):
-        plt.plot(num_destroyed, s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i], linewidth=2)
+        plt.plot(num_destroyed[:len(coverage_methods[i])], s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i], linewidth=2)
 
     plt.xlim(8,192)
     plt.ylim(0.05,1.05)
     plt.grid(linestyle='--')
     plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
     plt.ylabel('Average spatial coverage ratio', fontdict={'family':'serif', 'size':14})
-    plt.plot(num_destroyed, coverage_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]], marker=marklist[1], linewidth=2)
-    plt.plot(num_destroyed, coverage_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]], marker=marklist[0], linewidth=2)
+    plt.plot(num_destroyed[:len(coverage_methods[0])], coverage_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]], marker=marklist[0], linewidth=2)
     plt.legend(loc='upper right')
 
-    plt.savefig('./Figs/fig10b.png', dpi=600, bbox_inches='tight')
+    plt.savefig('./Figs/result2.png', dpi=600, bbox_inches='tight')
     plt.show()
 
     ratio = []
     for i in range(len(num_destroyed)):
-        ratio.append((coverage_methods[4][i] - coverage_methods[0][i])/coverage_methods[4][i])
+        ratio.append((coverage_methods[3][i] - coverage_methods[0][i])/coverage_methods[3][i])
 
     print(ratio, np.mean(ratio))
 
 
-# draw Fig.10c and Fig.10d
+# draw Fig.7a and Fig.7b
 def draw_degree_distribution():
 
     num_destroyed = [100, 150]
-    # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
+    # num_destroyed = [50, 80, 100, 120, 150, 180]
 
-    methods = ["MDSG-GC", "MDSG-APF", "CEN", "CR-MGC", "DEMD"]
-    method_labels = ["MDSG-GC", "MDSG-APF", "centering", "CR-MGC", "DEMD"]
+    methods = ["DAGL", "CEN", "GCN_2017", "CR-MGC", "DEMD"]
+    method_labels = ["DAGL", "centering", "GCN", "CR-MGC", "DEMD"]
 
     for dnum in num_destroyed:
         drange = range(200-dnum)
@@ -361,15 +275,16 @@ def draw_degree_distribution():
             data = data.split('\n')
             # print(data[7].replace(' ',''))
             degrees = eval(data[10])
-            if m in ["CEN", "GCN_2017"] and dnum == 150:
-                degrees = degrees[0:(200-dnum)*20]
+            # print(degrees)
+            # if m in ["CEN", "GCN_2017"] and dnum == 150:
+            #     degrees = degrees[0:(200-dnum)*20]
 
             dcount = []
 
             for d in drange:
                 # print(np.size(degrees))
                 dcount.append(np.sum(np.array(degrees)<=d)/np.size(degrees))
-
+                
             plt.plot(drange, dcount, label=method_labels[i], linewidth=2)
 
         plt.grid(axis='y')
@@ -378,12 +293,57 @@ def draw_degree_distribution():
         plt.ylabel(f'Cumulative Degree Distribution $P_d$', fontdict={'family':'serif', 'size':14})
         plt.ylim(0, 1.03)
         plt.legend(loc='lower right')
-        n = 'fig10c' if dnum==100 else 'fig10d'
-        plt.savefig(f'./Figs/{n}.png', dpi=600, bbox_inches='tight')
+        plt.savefig(f'./Figs/result3-d{dnum}.png', dpi=600, bbox_inches='tight')
         plt.show()
 
 
-# draw Fig.11b
+# draw Fig.8
+def draw_time():
+    time_method = []
+
+    num_destroyed = [50]
+
+    methods = ["CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD", "DAGL"]
+    method_labels = ["centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD", "DAGL"]
+
+    for dnum in num_destroyed:
+        time_method_dnum = []
+        for m in methods:
+            with open(f'./Logs/time/{m}.txt', 'r') as f:
+                data = f.read().split('\n')
+
+            time = [float(s) for s in data if s != '']
+            time = np.mean(time)
+
+            time_method_dnum.append(time)
+
+        time_method.append(time_method_dnum)
+
+    time_method = np.mean(time_method, axis=0)
+    plt.figure()
+    width = 0.8
+    x = np.arange(len(methods))
+
+    time_color = [colors[1], colors[2], colors[3], colors[4], colors[5], colors[6], colors[0]]
+
+    # plt.bar(x-width, time_method[0], width, label=f'$N_D$=50')
+    # plt.bar(x, time_method[1], width, label=f'$N_D$=100')
+    # plt.bar(x+width, time_method[2], width, label=f'$N_D$=150')
+    plt.bar(x, time_method, width, label=f'$N_D$=100', color=time_color)
+
+    for i in x:
+        plt.text(i, time_method[i], f'{time_method[i]:.3f}', ha='center', va='bottom')
+
+    plt.xticks(x, labels=method_labels, fontdict={'family':'serif', 'size':10})
+    plt.ylabel('Average Time Consuming /s', fontdict={'family':'serif', 'size':14})
+    plt.ylim(0, 12)
+    plt.grid(axis='y', linestyle='--')
+    plt.savefig('./Figs/time.png', dpi=600, bbox_inches='tight')
+
+    plt.show()
+
+
+# draw Fig.9b
 def draw_method_case():
 
     # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
@@ -392,10 +352,10 @@ def draw_method_case():
     num_methods = []
     time = [i/10 for i in range(-15, 500)]
 
-    linestyles = ['-', '-', '-.', '--', ':', '-.', '--', ':']
+    linestyles = ['-', '-.', '--', ':', '-.', '--', ':']
 
-    methods = ["MDSG-GC", "MDSG-APF", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
-    method_labels = ["MDSG-GC", "MDSG-APF", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
+    methods = ["DAGL", "CEN", "HERO", "SIDR", "GCN_2017", "CR-MGC", "DEMD"]
+    method_labels = ["DAGL", "centering", "HERO", "SIDR", "GCN", "CR-MGC", "DEMD"]
 
     for m in methods:
         with open(f'./Logs/case/{m}.txt', 'r') as f:
@@ -423,7 +383,7 @@ def draw_method_case():
     plt.grid(linestyle='--')
     plt.xlabel('Time $t$ /s', fontdict={'family':'serif', 'size':14})
     plt.ylabel('Number of Sub-nets', fontdict={'family':'serif', 'size':14})
-    plt.legend(loc='upper right', ncol=2)
+    plt.legend(loc='upper right')
     # plt.plot(num_destroyed, step_methods[2], c=mcolors.TABLEAU_COLORS[colors[2]],marker=marklist[2])
     plt.plot(time, num_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]])
     plt.plot(time, num_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]])
@@ -432,20 +392,193 @@ def draw_method_case():
     plt.show()
 
 
+# draw Fig.10
+def draw_loss_curve():
+
+    file_loss = ['loss_d50_setup', 'loss_d100_setup', 'loss_d150_setup', 'loss_d50', 'loss_d100', 'loss_d150']
+    loss_label = ['$N_D=50$', '$N_D=100$', '$N_D=150$', '$N_D=50$', '$N_D=100$', '$N_D=150$']
+
+    loss_curve_list = []
+    loss_std_list = []
+    step_range = range(1000)
+
+    for k in range(len(file_loss)):
+        with open(f'./Logs/loss/{file_loss[k]}.txt', 'r') as f:
+            data = f.read()
+
+        data = data.split('\n')[:-1]
+
+        for i in range(len(data)):
+            data[i] = [float(d) for d in data[i].replace(' ','').strip('[').strip(']').split(',')]
+
+        loss = np.array(data)
+        # print(loss)
+        # loss = loss[:5]
+        loss_mean = np.mean(loss, axis=0)
+        loss_curve_list.append(loss_mean)
+
+        loss_std = 1.96*np.std(loss, ddof=1)/np.sqrt(len(loss))
+        loss_std_list.append(loss_std)
+
+
+    plt.figure()
+    for k in range(len(file_loss)):
+        plt.plot(step_range, loss_curve_list[k], label=loss_label[k], c=colors[k], linewidth=2)
+        plt.fill_between(step_range, loss_curve_list[k]-loss_std_list[k], loss_curve_list[k]+loss_std_list[k], facecolor=colors[k], alpha=0.2)
+
+    plt.xlim(0,200)
+    # plt.ylim(100,1100)
+    plt.grid(linestyle='--')
+    plt.xlabel('Training Episode', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Loss Curve', fontdict={'family':'serif', 'size':14})
+    plt.legend(loc='upper right', ncol=2, title='   pre-trained              random    \n  initialization           initialization  ')
+    plt.savefig('./Figs/fig9.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+# draw Fig.11
+def draw_dilation():
+    plt.figure()
+    # tips = sns.load_dataset('tips')
+    # sns.boxplot(x='day', y='tip', hue='sex', data=tips)
+    # print(tips)
+    methods = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9', 'batch']
+    methods_label = ['k=1', 'k=2', 'k=3', 'k=4', 'k=5', 'k=6', 'k=7', 'k=8', 'k=9', 'parallel\ndilation']
+    # methods = ['k1', 'k2']
+    variable = [50, 100, 150]
+
+    # positions = [[i for i in range(1, 4*len(methods), 4)], [i for i in range(2, 4*len(methods), 4)], [i for i in range(3, 4*len(methods), 4)]]
+    positions = [[i for i in range(k, (len(variable)+1)*len(methods), len(variable)+1)] for k in range(1, len(variable)+1)]
+    position_tick = [i for i in range(2, (len(variable)+1)*len(methods), len(variable)+1)]
+
+    df = {'d50':[], 'd100':[], 'd150':[]}
+
+    for dnum in variable:
+        step_list = []
+
+        for m in methods:
+            with open(f'./Logs/dilation/DAGL_d{dnum}_{m}.txt', 'r') as f:
+                    data = f.read().split('\n')
+
+            step = data[4].replace(' ','').strip('[').strip(']')
+            step = [min(float(s)/10, 49.9) for s in step.split(',')]
+            step_list.append(step)
+
+        df[f'd{dnum}'] = deepcopy(step_list)
+
+    # print(df)
+    handles = []
+    for i, var in enumerate(variable):
+        bp = plt.boxplot(df[f'd{var}'], positions=positions[i], patch_artist=True)
+        handles.append(bp['boxes'][0])
+
+        for patch in bp['boxes']:
+            patch.set_facecolor(mcolors.TABLEAU_COLORS[colors[i+2]])
+
+    plt.xticks(position_tick, methods_label)
+    plt.legend(handles=handles, labels=[f'$N_D=${var}' for var in variable], loc='upper right')
+    plt.grid(axis='y', linestyle='--')
+    
+    # plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
+    plt.savefig('./Figs/dilation.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+# draw Fig.12
+def draw_ablation():
+
+    # num_destroyed = [25, 50, 75, 100, 125, 150, 175]
+    num_destroyed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190]
+
+    step_methods = []
+    step_methods_std = []
+
+    marklist = ['o', '^', 's', 'd']
+    methods = ["DAGL", "DAGL_woRC", "DAGL_org", "DAGL_org_woRC"]
+    method_labels = ["bipartite GCO w/ residual connection", "bipartite GCO w/o residual connection", "original GCO w/ residual connection", "original GCO w/o residual connection"]
+
+    for i, m in enumerate(methods):
+        step_m = []
+        step_std = []
+        
+        for dnum in num_destroyed:
+            try:
+                with open(f'./Logs/damage/d{dnum}/{m}_d{dnum}.txt', 'r') as f:
+                    data = f.read().split('\n')
+
+                # print(data[7].replace(' ',''))
+                step_list = data[4].replace(' ','').strip('[').strip(']')
+                step_list = [min(float(s)/10, 49.9) for s in step_list.split(',')]
+
+                step_m.append(float(data[7].replace(' ',''))/10)
+                # step_m.append(np.mean(step_list))
+                if i == 3 and dnum >= 90:
+                    step_std.append(5.58*np.std(step_list, ddof=1)/np.sqrt(len(step_list)))
+                else:
+                    step_std.append(2.58*np.std(step_list, ddof=1)/np.sqrt(len(step_list)))
+            except:
+                step_m.append(49.9)
+                step_std.append(0)
+
+        # print(step_std)
+        step_methods.append(step_m)
+        step_methods_std.append(step_std)
+
+    plt.figure()
+    for i in reversed(range(len(step_methods))):
+        # plt.fill_between(num_destroyed, np.array(step_methods[i])-np.array(step_methods_std[i]), np.array(step_methods[i])+np.array(step_methods_std[i]), color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.2)
+        plt.fill_between(num_destroyed, [max(s - s_std, 0) for s, s_std in zip(step_methods[i], step_methods_std[i])], [min(s + s_std, 49.9) for s, s_std in zip(step_methods[i], step_methods_std[i])], color=mcolors.TABLEAU_COLORS[colors[i]], alpha=0.15)
+
+    for i, s in enumerate(step_methods):
+        plt.plot(num_destroyed, s, c=mcolors.TABLEAU_COLORS[colors[i]],marker=marklist[i],label=method_labels[i], linewidth=2)
+
+    plt.xlim(8,192)
+    plt.ylim(-2,54)
+    plt.grid(linestyle='--')
+    plt.xlabel('Number of destroyed UAVs $N_D$', fontdict={'family':'serif', 'size':14})
+    plt.ylabel('Average recovery time $T_{rc}$ /s', fontdict={'family':'serif', 'size':14})
+    plt.legend(loc='upper left')
+    # plt.plot(num_destroyed, step_methods[2], c=mcolors.TABLEAU_COLORS[colors[2]],marker=marklist[2])
+    plt.plot(num_destroyed, step_methods[1], c=mcolors.TABLEAU_COLORS[colors[1]],marker=marklist[1], linewidth=2)
+    plt.plot(num_destroyed, step_methods[0], c=mcolors.TABLEAU_COLORS[colors[0]],marker=marklist[0], linewidth=2)
+
+    plt.savefig('./Figs/ablation.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+    ratio = []
+    for i in range(len(num_destroyed)):
+        ratio.append((step_methods[2][i] - step_methods[0][i])/step_methods[2][i])
+
+    print(ratio, sum(ratio)/len(num_destroyed))
+
+
+
+
 if __name__ == "__main__":
-    # Fig.7
-    # draw_khop()
+    # Fig.4
+    draw_convergence()
 
-    # # Fig.8
-    # draw_batch()
+    # Fig.5
+    draw_recovery_time()
 
-    # # Fig.9
-    # draw_loss_curve()
+    # Fig.6
+    draw_spatial_coverage()
+
+    # Fig.7a and 7b
+    draw_degree_distribution()
+
+    # Fig.8
+    draw_time()
+
+    # Fig.9b
+    draw_method_case()
 
     # Fig.10
-    # draw_method_figs()
-    # draw_spatial_coverage()
-    # draw_degree_distribution()
+    draw_loss_curve()
 
     # Fig.11
-    draw_method_case()
+    draw_dilation()
+
+    # Fig.12
+    draw_ablation()

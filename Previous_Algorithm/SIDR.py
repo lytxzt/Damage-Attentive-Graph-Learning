@@ -27,7 +27,7 @@ def SIDR(positions, remain_list):
     if config_dimension == 2:
         trajectory_point = np.array([500, 500])
     else:
-        trajectory_point = np.array([500, 500, 0])
+        trajectory_point = np.array([500, 500, 50])
     for num_c in range(len(true_cluster_index)):
         temp_positions = []
         for i in true_cluster_index[num_c]:
