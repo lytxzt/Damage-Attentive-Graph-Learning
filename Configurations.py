@@ -12,24 +12,26 @@ specify a certain GPU
 # random seed
 np.random.seed(1)
 random.seed(2)
-torch.manual_seed(1)
-
-config_dimension = 2
-config_initial_swarm_positions = pd.read_excel("Configurations/swarm_positions_200.xlsx")
-config_initial_swarm_positions = config_initial_swarm_positions.values[:, 1:1+config_dimension]
-config_initial_swarm_positions = np.array(config_initial_swarm_positions, dtype=np.float64)
+# torch.manual_seed(1)
 
 # configurations on swarm
 config_num_of_agents = 200
 config_communication_range = 120
 
+# configurations on positions
+config_dimension = 2
+config_initial_swarm_positions = pd.read_excel(f"Configurations/swarm_positions_{config_num_of_agents}.xlsx")
+config_initial_swarm_positions = config_initial_swarm_positions.values[:, 1:1+config_dimension]
+config_initial_swarm_positions = np.array(config_initial_swarm_positions, dtype=np.float64)
+
 # configurations on environment
-config_width = 1000.0
-config_length = 1000.0
+config_range_list = {"20":320.0, "50":500.0, "100":750.0, "200":1000.0, "500":1600.0, "1000":2250.0}
+config_width = config_range_list[f'{config_num_of_agents}']
+config_length = config_range_list[f'{config_num_of_agents}']
 config_height = 100.0
 
 config_space_range = np.array([config_width, config_length]) if config_dimension == 2 else np.array([config_width, config_length, config_height])
-config_central_point = config_space_range / 2
+config_central_point = config_space_range * 0.5
 
 config_constant_speed = 1
 
