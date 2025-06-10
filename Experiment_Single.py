@@ -22,19 +22,21 @@ use_pretrained = False
                     2 for CEN
                     3 for SIDR
                     4 for GCN-2017
+                    5 for GAT
                     5 for CR-MGC
-                    6 for DEMD
-                    7 for DAGL (best algorithm)
+                    7 for DEMD
+                    8 for DAGL (best algorithm)
 """
 # set this value to 7 to run the proposed algorithm
-config_algorithm_mode = 7
+config_algorithm_mode = 8
 algorithm_mode = {1: "HERO",
                   2: "CEN",
                   3: "SIDR",
                   4: "GCN_2017",
-                  5: "CR-MGC",
-                  6: "DEMD",
-                  7: "DAGL"}
+                  5: "GAT",
+                  6: "CR-MGC",
+                  7: "DEMD",
+                  8: "DAGL"}
 
 print("CNS issue Starts...")
 print("------------------------------")
