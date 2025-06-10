@@ -196,7 +196,7 @@ class Swarm:
                     self.max_time = deepcopy(max_time)
                     
             
-            # proposed DDAG algorithm
+            # proposed ML-DAGL algorithm
             elif self.algorithm_mode == 8:
                 if self.if_once_gcn_network:
                     for i in range(len(self.remain_list)):
@@ -281,7 +281,7 @@ class Swarm:
             if num == 1:
                 break
 
-            print(f"step {step} ---num of sub-nets {num}\t\t", end='\r')
+            print(f"step {step} ---num of sub-nets {num}", end='\r')
 
         return step, self.remain_positions, num
 
