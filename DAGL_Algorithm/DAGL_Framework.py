@@ -29,7 +29,7 @@ class DAGL:
             gcn_network.cuda()
 
         if self.use_pretrained:
-            gcn_network.load_state_dict(torch.load("./Pretrained_model/model.pt"))
+            gcn_network.load_state_dict(torch.load(f"./Pretrained_model/model_N{config_num_of_agents}.pt"))
 
         # self.optimizer = Adam(self.gcn_network.parameters(), lr=0.001)
         FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
@@ -127,8 +127,8 @@ class DAGL:
             num_storage.append(int(num_))
             loss_storage.append(loss_ % 5000)
             
-            # if train_step > 200 and num_ == 1:
-            #     torch.save(gcn_network.state_dict(), './Pretrained_model/model.pt')
+            # if train_step > 500 and num_ == 1:
+            #     torch.save(gcn_network.state_dict(), f"./Pretrained_model/model_N{config_num_of_agents}.pt")
          
         # update speed
         speed = np.zeros((config_num_of_agents, config_dimension))
